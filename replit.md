@@ -1,44 +1,48 @@
-# [Project name]
+# Prompt Index
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+A single-page personal index of AI prompts for francisvalente.com: find a prompt, copy it, leave.
 
 ## Run & Operate
 
-- `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
+- Workflow `artifacts/prompt-index: web` runs the site (Vite dev server at `/`)
 - `pnpm run typecheck` — full typecheck across all packages
-- `pnpm run build` — typecheck + build all packages
-- `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
-- `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- Required env: `DATABASE_URL` — Postgres connection string
+- `pnpm --filter @workspace/prompt-index run build` — production static build
+- Deploys as a Replit static deployment; the custom domain francisvalente.com gets attached in deployment settings after the first publish
 
 ## Stack
 
 - pnpm workspaces, Node.js 24, TypeScript 5.9
-- API: Express 5
-- DB: PostgreSQL + Drizzle ORM
-- Validation: Zod (`zod/v4`), `drizzle-zod`
-- API codegen: Orval (from OpenAPI spec)
-- Build: esbuild (CJS bundle)
+- Site: Vite + React, static, no backend and no database (the shared api-server exists in the workspace but the site does not use it)
+- Fonts: JetBrains Mono only, self-hosted via @fontsource/jetbrains-mono (400/500/700)
+- Markdown rendering: `marked` (the only parser dependency)
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `artifacts/prompt-index/` — the site
+- `artifacts/prompt-index/content/prompts/*.md` — one markdown file per prompt, parsed at build time via `import.meta.glob` with `?raw`
+- `SCHEMA.md` (repo root) — documents the content model; never rendered, linked or referenced on the site
+- `attached_assets/Pasted--Replit-Agent-Build-Brief-Prompt-Index-francisvalente-c_1787282585385.txt` — the binding build spec; consult it before any design or scope change
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- Frontmatter is parsed by a small hand-rolled parser in the app (no gray-matter/YAML lib) to honor the strict dependency budget
+- The raw markdown body (frontmatter excluded) is kept verbatim in memory; it is both the COPY clipboard payload and the render source
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+One page: INDEX header, single Prompts tab, filter input (`/` focuses, Esc clears, case-insensitive substring across id/title/category/type/platforms), categories in fixed order (Protocols, Discovery, Generation, Repairs, Review, Builds; empty ones vanish entirely), dense hairline rows that expand inline to rendered markdown, COPY button copying the raw body exactly.
 
 ## User preferences
 
-_Populate as you build — explicit user instructions worth remembering across sessions._
+- The attached build brief is the spec and wins over defaults: clinical greyscale look, accent #ff5c00 only on active-tab underline / hover / focus / COPIED, no icons, images, shadows, cards, gradients, toasts, footer, or descriptive copy anywhere
+- No new dependencies beyond React, Vite, @fontsource/jetbrains-mono, and one markdown parser
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+- Prompt files are the byte-exact source of truth for the COPY action: never reformat, re-wrap, or "clean up" files under `content/prompts/`
+- Frontmatter `id` is a three-digit string assigned once, never renumbered or reused; next id = highest existing + 1
+- Page head must keep the robots noindex meta tag
+- A category header must never render without entry rows under it
 
 ## Pointers
 

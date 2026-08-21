@@ -1,0 +1,25 @@
+@import 'tailwindcss';
+@import "@fontsource/jetbrains-mono/400.css";
+@import "@fontsource/jetbrains-mono/500.css";
+@import "@fontsource/jetbrains-mono/700.css";
+@plugin "@tailwindcss/typography";
+
+@theme {
+  --color-background: #0a0a0a;
+  --color-foreground: #e6e6e6;
+  --color-muted: #8a8a8a;
+  --color-border: #1f1f1f;
+  --color-accent: #ff5c00;
+
+  --font-mono: "JetBrains Mono", monospace;
+  --font-sans: "JetBrains Mono", monospace;
+}
+
+@layer base {
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-mono);
+    -webkit-font-smoothing: antialiased;
+  }
+}

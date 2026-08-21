@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Prompt Index"
+description = "A single-page personal index of AI prompts for francisvalente.com. Markdown files in the repo are parsed at build time into a filterable, keyboard-friendly list with one-click copy of each prompt's raw markdown body. A clinical monospace reference tool: find a prompt, copy it, leave."
+version = "1.0.0"
+id = "artifacts/prompt-index"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 25438
+
+[services.development]
+run = "pnpm --filter @workspace/prompt-index run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/prompt-index", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/prompt-index/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "25438"
+BASE_PATH = "/"

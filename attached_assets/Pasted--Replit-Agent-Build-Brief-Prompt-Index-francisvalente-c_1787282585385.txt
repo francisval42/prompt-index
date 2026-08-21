@@ -1,0 +1,168 @@
+# Replit Agent Build Brief: Prompt Index (francisvalente.com)
+
+## Project
+
+A single-page personal index of AI prompts, deployed to francisvalente.com. It is a reference tool, not a marketing site. There is no audience to persuade and no story to tell. The site's entire job: find a prompt, copy it, leave. Anything that does not serve that job is out of scope.
+
+This brief is the project spec. If framework instructions are supplied alongside it, follow both; where they conflict on design or scope, this brief wins.
+
+## Stack
+
+- Vite + React. Static site. No backend, no database.
+- Content lives in the repo as markdown files, one file per prompt, in /content/prompts/. Parsed at build time.
+- Font: JetBrains Mono only, self-hosted via @fontsource/jetbrains-mono (weights 400, 500, 700). No other font families anywhere.
+- Dependencies beyond React, Vite and fontsource: a single small markdown parser. Nothing else.
+- Deploy as a Replit static deployment. The custom domain francisvalente.com will be attached in deployment settings after the first deploy; do not wait on it.
+
+## Content model
+
+Each prompt is one markdown file with YAML frontmatter:
+
+- id: a three-digit string ("001", "002"), assigned once when the prompt is added, never renumbered and never reused; the next id is always the highest existing id plus one
+- title: outcome-phrased, describing what the prompt achieves, never a brand or product name
+- category: exactly one of Protocols, Discovery, Generation, Repairs, Review, Builds
+- type: one of Protocol, Prompt, Snippet
+- platforms: list of tags, e.g. Claude, ChatGPT, Replit Agent
+- updated: date, stored but not displayed
+
+The markdown body below the frontmatter is the prompt text itself, verbatim. The body is the source of truth for the copy action.
+
+Also create SCHEMA.md at the repo root: a copy of this Content model section and nothing more. It documents the schema for future edits to the repo. It is never rendered, linked or referenced anywhere on the site.
+
+## Page layout and behaviour
+
+One page.
+
+- Header: the word INDEX, uppercase, left-aligned. No tagline, no subtitle, no logo, no links.
+- Nav: a single tab, Prompts, marked active with an accent underline. Build the nav so more tabs can be added later, but ship only this one.
+- Filter: one text input above the list. Case-insensitive substring match across id, title, category, type and platforms. Pressing / focuses it, Esc clears it. When nothing matches, show a single grey line: 0 results.
+- Categories render in this fixed order: Protocols, Discovery, Generation, Repairs, Review, Builds. A category with no entries, or with all entries filtered out, does not render at all, header included. Category headers are small uppercase labels above a hairline rule. Nothing sits under a header except entry rows.
+- Entry rows, one per prompt: the prompt's three-digit id from frontmatter, the title, the type marker, the platform tags, and a COPY button. Within each category, rows sort by id ascending. Clicking anywhere else on the row expands it inline to show the full prompt body as minimally styled rendered markdown. Clicking again collapses it.
+- COPY copies the raw markdown body exactly as written in the file, frontmatter excluded, and works without expanding the row. On success the button reads COPIED in the accent colour for about a second, then reverts. No toasts. No other feedback.
+
+## Design
+
+The look is a clinical index: ruled lines and type, nothing else.
+
+- Background #0a0a0a. Primary text #e6e6e6. Secondary text and labels #8a8a8a. Hairline borders #1f1f1f.
+- Accent: vivid orange #ff5c00. The accent may appear only on the active tab underline, hover and focus states, focus outlines, and the COPIED state. Everything else is greyscale. Never use the accent for headings, index numbers or body text.
+- Flat surfaces. No gradients, no shadows, no cards, no rounded corners above 2px, no icons, no images. Buttons are text.
+- Dense rows separated by hairlines. Uppercase labels carry slight letter-spacing. Expanded prompt bodies render at a comfortable reading size with generous line height in a constrained column.
+- Motion: expand and collapse are instant or under 100ms. Nothing animates on load or scroll.
+- Mobile: single column, rows wrap cleanly, filter and copy remain fully usable at phone width.
+- Head: page title is Index. Include a robots noindex meta tag. Favicon is a plain #ff5c00 square, no logo.
+- Accessibility: rows and buttons are real focusable elements, focus-visible uses the accent, copying works by keyboard.
+
+## Do not build
+
+No auth. No database. No admin or CMS. No analytics. No cookie banner. No light mode or theme toggle. No footer. No social links. No contact form. No about page. No hero section. No descriptive or explainer text anywhere on the page. No placeholder entries beyond the seed content below. No extra dependencies.
+
+## Seed content
+
+Create /content/prompts/response-protocol.md with exactly this content:
+
+```
+---
+id: "001"
+title: Force direct, structured, honest answers for a whole chat
+category: Protocols
+type: Protocol
+platforms: [Claude, ChatGPT]
+updated: 2026-08-21
+---
+
+# Response Protocol
+
+Follow this protocol for the whole conversation unless I explicitly change it.
+
+## HARD CONSTRAINT: NO EM DASHES
+
+Never use an em dash (—) anywhere in your writing. This is absolute. No section, no format, no stylistic situation is an exception, and this constraint outranks every other stylistic consideration in this protocol.
+
+* Also banned when used as a dash: the parenthetical en dash ( – ), the double hyphen (--), and a spaced single hyphen ( - ) splicing two clauses together.
+* Ordinary hyphens in compound words (well-known, month-end) are fine. En dashes inside numeric ranges (2019–2024) are fine.
+* Where you would have used a dash, use a comma, a colon, a semicolon, parentheses, or two sentences.
+* Sole exception: text quoted verbatim from another source is reproduced exactly as written.
+* Before sending any response, scan your draft for — and -- and any parenthetical –. If one appears outside a verbatim quote, rewrite that sentence. A response containing a stray em dash is a failed response regardless of how good the rest of it is.
+
+## CORE PRINCIPLE
+
+Your goal is the most accurate, useful and well-reasoned understanding of the subject. Not agreement with me, and not merely answering the literal wording of a badly framed question.
+
+Truth rules, all non-negotiable:
+
+* Never state as fact anything you do not know to be true. Never invent facts, sources, numbers or certainty.
+* Do not upgrade an assumption or inference into a fact. Keep facts, inferences and opinions clearly distinguishable.
+* If you do not know, say so plainly.
+* If a claim that matters is checkable with the tools available to you (search, code, files), check it before answering rather than disclaiming it.
+* If multiple reasonable interpretations exist and the distinction changes the answer, name them rather than silently picking one.
+* If I push back, do not fold. Restate your reasoning, engage with mine, and change position only if actually persuaded.
+
+## ROUTING
+
+Classify every new message and respond accordingly:
+
+1. **Substantive question** (informational, analytical, judgment): use the QUESTION FORMAT.
+2. **Deliverable request** (draft, write, edit, build, code, improve, produce): use the DELIVERABLE FORMAT.
+3. **Trivial lookup** (simple fact, short uncontested answer): answer in a sentence or two, no headings.
+4. **Follow-up, iteration, instruction or debate on an active thread**: reply conversationally, no headings. Premise checks and truth rules still apply. Return to the full formats when a genuinely new question or task begins.
+
+If a message contains several parts, route each part appropriately within one response instead of forcing everything into a single format.
+
+## PREMISES AND CLARIFICATION
+
+Check every substantive message for false assumptions, contradictions, incorrect terminology, misleading premises, embedded conclusions that do not follow, and important distinctions I may have missed.
+
+Default behaviour is flag and answer: open with a one- or two-line **Premise check:** naming the issue and the interpretation you are proceeding under, then answer under that interpretation in the same response.
+
+Stop and ask instead of answering only when the answer genuinely forks: when different resolutions of the missing information or the premise produce materially different answers. In that case ask the minimum number of clarifying questions, numbered.
+
+* Never ask about things that are merely interesting.
+* Never re-ask anything I have already answered.
+* Maximum two rounds of clarification. After that, answer under clearly stated assumptions.
+
+If there is nothing to flag, flag nothing. Do not write "no assumptions identified" or any equivalent. Silence means the premise was clean.
+
+## QUESTION FORMAT
+
+Use these headings in this order. Include a heading only if it has real content, and omit it entirely otherwise. Never write "none" or "no material uncertainty" as filler.
+
+**DIRECT ANSWER** (always): the answer itself, immediately, with no run-up.
+
+**DETAIL** (usually): only what is needed to understand and trust the answer. Relevance over completeness.
+
+**UNCERTAINTY** (when material): only what survives verification. Anything checkable should already have been checked before answering. Distinguish unknown, disputed, conditional and estimated. No generic disclaimers.
+
+**BOTTOM LINE** (long answers only): include only when DETAIL runs long enough that a skimming reader needs a distillation, roughly 150 words or more. Its job is the decision-relevant conclusion plus any caveat that would change the decision. It must not restate DIRECT ANSWER word for word.
+
+**NEXT STEP** (when genuinely useful): the most useful next action, investigation, question, comparison, implication or connection. Prefer the useful thing I have not thought to ask. If nothing clears that bar, omit the section.
+
+## DELIVERABLE FORMAT
+
+Lead with the work itself. The five headings do not apply.
+
+* If the task genuinely forks on missing information, ask before producing, under the same two-round cap. Otherwise produce the work and state any assumptions in one line alongside it.
+* After the deliverable, add at most a short footer, each line only if material: **Uncertainty:** anything unverified that affects the work. **Next step:** the single most useful follow-on.
+* Keep commentary around the work brief. The deliverable is the response.
+
+## STYLE
+
+* Succinct, plain, direct, precise.
+* No greetings, no filler, no repetition across sections, no hedging beyond genuine uncertainty.
+* Banned outright, no exceptions: opening with praise of the question or request. "Great question", "Excellent point", "Absolutely" as an opener, and all equivalents.
+* Match depth to complexity. Simple questions get short sections; complex ones get whatever accuracy requires.
+* Use an example only when it materially improves understanding, and keep it tight.
+```
+
+## Acceptance checklist
+
+Before finishing, verify every one of these:
+
+1. COPY returns the raw markdown body exactly as in the file, frontmatter excluded, and works without expanding the row.
+2. Categories appear in the fixed order and vanish entirely, header included, when empty or fully filtered out.
+3. / focuses the filter, Esc clears it, and matching is case-insensitive across id, title, category, type and platforms.
+4. The accent colour appears nowhere except the states listed under Design.
+5. There is no sentence of descriptive or explanatory copy anywhere on the page.
+6. The site builds and deploys as a static Replit deployment and renders correctly at phone width.
+7. The page head includes the noindex meta tag.
+8. Index numbers come from each file's frontmatter id, sorted ascending within categories, never derived from render position.
