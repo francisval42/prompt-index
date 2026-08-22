@@ -5,6 +5,7 @@ import brandSkillExampleRaw from '../content/brand-skill/example.md?raw';
 
 // Load all markdown files
 const promptModules = import.meta.glob('../content/prompts/*.md', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
+const launchReadyModules = import.meta.glob('../content/launch-ready/*.md', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
 
 const CATEGORY_ORDER = [
   "Protocols",
@@ -58,6 +59,20 @@ const BRAND_STEPS = [
 ];
 
 const brandSkillExample = parsePrompt(brandSkillExampleRaw);
+
+const launchReadyDocs = Object.values(launchReadyModules)
+  .map(parsePrompt)
+  .filter(Boolean)
+  .sort((a: any, b: any) => Number(a.order) - Number(b.order));
+
+const LAUNCH_STEPS = [
+  '1. Copy the build rules into replit.md before the first prompt. Other tools: CLAUDE.md, .cursor/rules, or attach the file at chat start.',
+  '2. Paste the kickoff prompt. The AI confirms the rules, asks the setup questions, builds the scaffold before any feature.',
+  '3. Request features with the feature template. Every feature ends on the definition of done.',
+  '4. Every few features, run a checkpoint sweep: access, duplicates, secrets, schema, queries.',
+  '5. Before launch, run the audit as a second user. Fix every critical.',
+  '6. Rotate every key. Launch.',
+];
 
 function copyText(text: string, done: () => void) {
   if (navigator.clipboard && window.isSecureContext) {
@@ -188,8 +203,89 @@ function BrandSkillPage() {
   );
 }
 
+function LaunchDocRow({ doc }: { doc: any }) {
+  const [expanded, setExpanded] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = (e: React.MouseEvent | React.KeyboardEvent) => {
+    e.stopPropagation();
+    if (copied) return;
+    copyText(doc.body, () => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1000);
+    });
+  };
+
+  return (
+    <div className="border-b border-border group">
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={() => setExpanded(!expanded)}
+        onKeyDown={e => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            setExpanded(!expanded);
+          }
+        }}
+        className="flex flex-col sm:flex-row sm:items-center py-3 gap-2 sm:gap-4 hover:bg-[#111] focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:-outline-offset-2 cursor-pointer transition-none outline-none"
+      >
+        <div className="text-muted w-10 shrink-0 hidden sm:block">{doc.order}</div>
+        <div className="text-foreground flex-1 font-medium flex gap-2">
+          <span className="sm:hidden text-muted">{doc.order}</span>
+          {doc.title}
+        </div>
+        <div className="text-muted text-sm shrink-0 sm:w-48">{doc.file}</div>
+        <button
+          onClick={handleCopy}
+          onKeyDown={e => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              e.stopPropagation();
+              handleCopy(e);
+            }
+          }}
+          className={`shrink-0 self-start sm:self-auto sm:w-20 text-left sm:text-right font-bold focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent outline-none ${copied ? 'text-accent' : 'text-muted hover:text-foreground'}`}
+          tabIndex={0}
+        >
+          {copied ? 'COPIED' : 'COPY'}
+        </button>
+      </div>
+
+      {expanded && (
+        <div className="py-8 bg-background border-t border-border cursor-auto">
+          <div
+            className="prose prose-invert prose-p:leading-relaxed prose-pre:bg-[#111] prose-pre:border prose-pre:border-border max-w-3xl mx-auto prose-hr:border-border prose-headings:font-bold prose-headings:text-foreground"
+            dangerouslySetInnerHTML={{ __html: marked.parse(doc.body) as string }}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function LaunchReadyPage() {
+  return (
+    <div className="flex flex-col gap-10 pb-16">
+      <ol className="flex flex-col gap-3">
+        {LAUNCH_STEPS.map(step => (
+          <li key={step}>{step}</li>
+        ))}
+      </ol>
+
+      <section className="flex flex-col">
+        <div className="border-t border-border flex flex-col">
+          {launchReadyDocs.map((doc: any) => (
+            <LaunchDocRow key={doc.order} doc={doc} />
+          ))}
+        </div>
+      </section>
+    </div>
+  );
+}
+
 function App() {
-  const [tab, setTab] = useState<'prompts' | 'brand'>('prompts');
+  const [tab, setTab] = useState<'prompts' | 'brand' | 'launch'>('prompts');
   const [filter, setFilter] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -263,11 +359,20 @@ function App() {
         >
           Brand skill
         </button>
+        <button
+          type="button"
+          onClick={() => setTab('launch')}
+          className={`h-full flex items-center px-2 -mb-[1px] border-b-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:-outline-offset-2 outline-none ${tab === 'launch' ? 'border-accent text-foreground font-medium' : 'border-transparent text-muted hover:text-foreground'}`}
+        >
+          Launch ready
+        </button>
       </nav>
 
       <main className="flex-1 max-w-5xl w-full mx-auto p-4 sm:p-8 flex flex-col gap-10">
         {tab === 'brand' ? (
           <BrandSkillPage />
+        ) : tab === 'launch' ? (
+          <LaunchReadyPage />
         ) : (
           <>
             <div>
