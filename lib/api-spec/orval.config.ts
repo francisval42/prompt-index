@@ -57,6 +57,9 @@ export default defineConfig({
       prettier: true,
       override: {
         zod: {
+          // Explicit pin: the workspace uses `"zod": "catalog:"`, which orval's
+          // auto-detection cannot parse (it then wrongly assumes zod v4 syntax).
+          version: 3,
           coerce: {
             query: ['boolean', 'number', 'string'],
             param: ['boolean', 'number', 'string'],

@@ -5,13 +5,6 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
-export interface HealthStatus {
-  status: string;
-}
-
-export interface PayConfig {
-  publishableKey: string;
-}
 
 export interface PayIntentInput {
   /**
@@ -26,12 +19,3 @@ export interface PayIntentInput {
      */
   reference?: string;
 }
-
-export interface PayIntent {
-  clientSecret: string;
-}
-
-export interface ApiErrorMessage {
-  error: string;
-}
-
