@@ -57,6 +57,13 @@ One page: INDEX header, single Prompts tab, filter input (`/` focuses, Esc clear
 - `stripe-replit-sync` must stay in the esbuild `external` list in `api-server/build.mjs` — bundling it makes its migrations a silent no-op
 - Keep `trust proxy` set to `1` (not `true`) in `app.ts`; trusting the whole chain lets clients spoof `req.ip` past the rate limiter
 
+## Brand
+
+- Approved brand direction: the FRANCIS VALENTE specimen at `attached_assets/francis_valente_brand_spec_1787401127952.html`; kit boards are canvas iframes backed by `artifacts/mockup-sandbox/src/components/mockups/brand-kit/`
+- Reusable assets: `attached_assets/brand/` (tokens.css, tokens.json, fonts/, marks/) plus the bundle `attached_assets/francis-valente-brand-kit.zip`
+- Rules: Gladiator is display-only (wordmark and large display moments, never below ~28px, never UI labels or body); orange #ff5c00 marks active/focused/copied states only, never decoration; a light context (#ffffff background, same ink/muted/accent) is approved in the spec
+- The live site still follows the build brief (JetBrains Mono only); adopting Gladiator on the site requires an explicit user decision
+
 ## Pointers
 
 - See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and package details

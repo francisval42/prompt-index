@@ -1,0 +1,47 @@
+/* FRANCIS VALENTE brand kit. Values are exact, from the approved brand specimen. */
+@font-face {
+  font-family: 'Gladiator';
+  src: url('/__mockup/fonts/brand/Gladiator-normal.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: block;
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  src: url('/__mockup/fonts/brand/JetBrainsMono-400.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  src: url('/__mockup/fonts/brand/JetBrainsMono-500.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: block;
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  src: url('/__mockup/fonts/brand/JetBrainsMono-700.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: block;
+}
+
+:root {
+  --fv-ink: #0a0a0a;
+  --fv-panel: #1f1f1f;
+  --fv-text: #e6e6e6;
+  --fv-muted: #8a8a8a;
+  --fv-accent: #ff5c00;
+  --fv-light: #ffffff;
+  --fv-font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+  --fv-font-display: 'Gladiator', 'JetBrains Mono', monospace;
+}
+
+.fv-board {
+  font-family: var(--fv-font-mono);
+  font-synthesis: none;
+  background: var(--fv-ink);
+  color: var(--fv-text);
+}

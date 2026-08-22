@@ -1,0 +1,16 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "W1ysW9WM7vWvOalSUUHZq"
+uri = "file://attached_assets/francis-valente-brand-kit.zip"
+type = "unspecified"
+title = "Brand kit assets"
+description = "Design tokens (CSS + JSON), the three mark SVGs, Gladiator TTF and JetBrains Mono woff2 files."
+logical_id = "7e297f1b-d16b-4e9e-b953-48225609ca7c"
+content_hash = "sha256:0c99707a9ac6f8704242c2c6b8f10f2301e149f725f378eec0cb642cc4ae5113"
+size = 95507
+mtime_ms = 1787402480002
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:098e0b03-073e-4b65-8a10-064cf7a2c75a/7e297f1b-d16b-4e9e-b953-48225609ca7c/94b13464-68da-46c2-8b5d-db1db41078de"
+storage_version_token = "1787402481154834"
+content_type = "application/octet-stream"

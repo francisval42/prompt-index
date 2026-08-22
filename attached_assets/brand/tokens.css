@@ -1,0 +1,15 @@
+/* FRANCIS VALENTE design tokens. Exact values, from the approved brand specimen. */
+:root {
+  --fv-ink: #0a0a0a;      /* page background, dark context */
+  --fv-panel: #1f1f1f;    /* raised surfaces, hairline rules on dark */
+  --fv-text: #e6e6e6;     /* primary text on dark */
+  --fv-muted: #8a8a8a;    /* secondary text, both contexts */
+  --fv-accent: #ff5c00;   /* state only: active, focused, copied */
+  --fv-light: #ffffff;    /* light context background */
+  --fv-font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+  --fv-font-display: 'Gladiator', 'JetBrains Mono', monospace; /* display only, never below ~28px */
+}
+.fv-light-context {
+  background: var(--fv-light);
+  color: var(--fv-ink);
+}

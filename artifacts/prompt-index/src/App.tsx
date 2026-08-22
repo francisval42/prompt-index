@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { marked } from 'marked';
 
+import brandSkillExampleRaw from '../content/brand-skill/example.md?raw';
+
 // Load all markdown files
 const promptModules = import.meta.glob('../content/prompts/*.md', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
 
@@ -46,6 +48,39 @@ function parsePrompt(raw: string) {
 
 const allPrompts = Object.values(promptModules).map(parsePrompt).filter(Boolean);
 
+const BRAND_STEPS = [
+  '1. Open a Cowork chat in Claude.',
+  "2. Give it a brand skill to copy the shape of. The example below works. So does Claude's built-in brand-guidelines skill.",
+  "3. Connect the folder holding your logos, fonts and brand assets. If there isn't one, name your colours and fonts in the chat.",
+  '4. Ask for a skill file for your own brand: colours, type, voice, rules.',
+  '5. It renders a specimen. Correct it until it looks like you.',
+  '6. Save the skill from the file card.',
+];
+
+const brandSkillExample = parsePrompt(brandSkillExampleRaw);
+
+function copyText(text: string, done: () => void) {
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(text).then(done).catch(err => console.error("Copy failed", err));
+  } else {
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    textArea.style.position = "fixed";
+    textArea.style.left = "-999999px";
+    textArea.style.top = "-999999px";
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    try {
+      document.execCommand('copy');
+      done();
+    } catch (error) {
+      console.error("Copy failed", error);
+    }
+    textArea.remove();
+  }
+}
+
 function PromptRow({ prompt }: { prompt: any }) {
   const [expanded, setExpanded] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -53,34 +88,10 @@ function PromptRow({ prompt }: { prompt: any }) {
   const handleCopy = (e: React.MouseEvent | React.KeyboardEvent) => {
     e.stopPropagation();
     if (copied) return;
-    
-    const copyText = prompt.body;
-    
-    // Helper to finish copy
-    const done = () => {
+    copyText(prompt.body, () => {
       setCopied(true);
       setTimeout(() => setCopied(false), 1000);
-    };
-
-    if (navigator.clipboard && window.isSecureContext) {
-      navigator.clipboard.writeText(copyText).then(done).catch(err => console.error("Copy failed", err));
-    } else {
-      const textArea = document.createElement("textarea");
-      textArea.value = copyText;
-      textArea.style.position = "fixed";
-      textArea.style.left = "-999999px";
-      textArea.style.top = "-999999px";
-      document.body.appendChild(textArea);
-      textArea.focus();
-      textArea.select();
-      try {
-        document.execCommand('copy');
-        done();
-      } catch (error) {
-        console.error("Copy failed", error);
-      }
-      textArea.remove();
-    }
+    });
   };
 
   return (
@@ -136,16 +147,58 @@ function PromptRow({ prompt }: { prompt: any }) {
   );
 }
 
+function BrandSkillPage() {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    if (copied) return;
+    copyText(brandSkillExampleRaw, () => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1000);
+    });
+  };
+
+  return (
+    <div className="flex flex-col gap-10 pb-16">
+      <ol className="flex flex-col gap-3">
+        {BRAND_STEPS.map(step => (
+          <li key={step}>{step}</li>
+        ))}
+      </ol>
+
+      <section className="flex flex-col">
+        <div className="border-t border-border pt-4 flex items-center justify-between gap-4">
+          <h2 className="text-xs tracking-wider text-muted font-medium">WORKED EXAMPLE: francis-valente-brand</h2>
+          <button
+            onClick={handleCopy}
+            className={`shrink-0 font-bold focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent outline-none ${copied ? 'text-accent' : 'text-muted hover:text-foreground'}`}
+            tabIndex={0}
+          >
+            {copied ? 'COPIED' : 'COPY'}
+          </button>
+        </div>
+        <div className="py-8">
+          <div
+            className="prose prose-invert prose-p:leading-relaxed prose-pre:bg-[#111] prose-pre:border prose-pre:border-border max-w-3xl mx-auto prose-hr:border-border prose-headings:font-bold prose-headings:text-foreground"
+            dangerouslySetInnerHTML={{ __html: marked.parse(brandSkillExample?.body ?? '') as string }}
+          />
+        </div>
+      </section>
+    </div>
+  );
+}
+
 function App() {
+  const [tab, setTab] = useState<'prompts' | 'brand'>('prompts');
   const [filter, setFilter] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === '/') {
-        if (document.activeElement !== inputRef.current) {
+        if (inputRef.current && document.activeElement !== inputRef.current) {
           e.preventDefault();
-          inputRef.current?.focus();
+          inputRef.current.focus();
         }
       } else if (e.key === 'Escape') {
         setFilter('');
@@ -195,43 +248,60 @@ function App() {
         <h1 className="text-xl font-bold uppercase tracking-wide">INDEX</h1>
       </header>
       
-      <nav className="px-4 sm:px-8 border-b border-border flex items-end h-12">
-        <div className="h-full flex items-center border-b-2 border-accent text-foreground font-medium px-2 -mb-[1px]">
+      <nav className="px-4 sm:px-8 border-b border-border flex items-end h-12 gap-2">
+        <button
+          type="button"
+          onClick={() => setTab('prompts')}
+          className={`h-full flex items-center px-2 -mb-[1px] border-b-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:-outline-offset-2 outline-none ${tab === 'prompts' ? 'border-accent text-foreground font-medium' : 'border-transparent text-muted hover:text-foreground'}`}
+        >
           Prompts
-        </div>
+        </button>
+        <button
+          type="button"
+          onClick={() => setTab('brand')}
+          className={`h-full flex items-center px-2 -mb-[1px] border-b-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:-outline-offset-2 outline-none ${tab === 'brand' ? 'border-accent text-foreground font-medium' : 'border-transparent text-muted hover:text-foreground'}`}
+        >
+          Brand skill
+        </button>
       </nav>
 
       <main className="flex-1 max-w-5xl w-full mx-auto p-4 sm:p-8 flex flex-col gap-10">
-        <div>
-          <input 
-            ref={inputRef}
-            type="text"
-            placeholder="Filter..."
-            value={filter}
-            onChange={e => setFilter(e.target.value)}
-            className="w-full bg-transparent border border-border px-4 py-3 text-foreground focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-none placeholder:text-muted"
-          />
-        </div>
-
-        {!hasResults ? (
-          <div className="text-muted border-t border-border pt-4">0 results</div>
+        {tab === 'brand' ? (
+          <BrandSkillPage />
         ) : (
-          <div className="flex flex-col gap-12 pb-16">
-            {CATEGORY_ORDER.map(cat => {
-              const items = grouped[cat];
-              if (!items || items.length === 0) return null;
-              return (
-                <section key={cat} className="flex flex-col">
-                  <h2 className="text-xs uppercase tracking-wider text-muted mb-2 font-medium">{cat}</h2>
-                  <div className="border-t border-border flex flex-col">
-                    {items.map(p => (
-                      <PromptRow key={p.id} prompt={p} />
-                    ))}
-                  </div>
-                </section>
-              );
-            })}
-          </div>
+          <>
+            <div>
+              <input 
+                ref={inputRef}
+                type="text"
+                placeholder="Filter..."
+                value={filter}
+                onChange={e => setFilter(e.target.value)}
+                className="w-full bg-transparent border border-border px-4 py-3 text-foreground focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-none placeholder:text-muted"
+              />
+            </div>
+
+            {!hasResults ? (
+              <div className="text-muted border-t border-border pt-4">0 results</div>
+            ) : (
+              <div className="flex flex-col gap-12 pb-16">
+                {CATEGORY_ORDER.map(cat => {
+                  const items = grouped[cat];
+                  if (!items || items.length === 0) return null;
+                  return (
+                    <section key={cat} className="flex flex-col">
+                      <h2 className="text-xs uppercase tracking-wider text-muted mb-2 font-medium">{cat}</h2>
+                      <div className="border-t border-border flex flex-col">
+                        {items.map(p => (
+                          <PromptRow key={p.id} prompt={p} />
+                        ))}
+                      </div>
+                    </section>
+                  );
+                })}
+              </div>
+            )}
+          </>
         )}
       </main>
     </div>
