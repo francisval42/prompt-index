@@ -8,6 +8,7 @@ A single-page personal index of AI prompts for francisvalente.com: find a prompt
 - Workflow `artifacts/api-server: API Server` runs the backend (`/api`); required for `/pay`, unused by the index page
 - `pnpm run typecheck` — full typecheck across all packages
 - `pnpm --filter @workspace/prompt-index run build` — production static build
+- `node scripts/src/gen-favicon.mjs` — regenerates the favicon set (fv on charcoal sphere) in `public/` from the brand fonts and tokens
 - Deploys as a Replit monorepo deployment (static site + api-server); the custom domain francisvalente.com gets attached in deployment settings after the first publish
 
 ## Stack

@@ -8,7 +8,10 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "devDependencies": {
+    "@resvg/resvg-js": "^2.6.2",
     "@types/node": "catalog:",
+    "fontkit": "^2.0.4",
+    "png-to-ico": "^3.0.2",
     "tsx": "catalog:"
   }
 }
