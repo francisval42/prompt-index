@@ -234,7 +234,7 @@ export default function PayPage() {
   return (
     <div className="min-h-[100dvh] bg-background text-foreground flex flex-col font-mono text-sm sm:text-base">
       <header className="px-4 py-6 sm:px-8 border-b border-border">
-        <h1 className="text-xl font-bold uppercase tracking-wide">INDEX</h1>
+        <h1 className="font-display font-normal text-3xl sm:text-4xl leading-none uppercase tracking-[.015em]">INDEX</h1>
       </header>
 
       <nav className="px-4 sm:px-8 border-b border-border flex items-end h-12">

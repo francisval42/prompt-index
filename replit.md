@@ -16,7 +16,7 @@ A single-page personal index of AI prompts for francisvalente.com: find a prompt
 - Site: Vite + React, static; the index page uses no backend, the `/pay` page calls the shared api-server
 - API: Express on the shared api-server artifact; contract-first (endpoints declared in `lib/api-spec/openapi.yaml`, orval generates the zod schemas and fetch client)
 - Payments: Stripe via the Replit connector (test keys in dev; live keys arrive via the Publish pane when publishing). `stripe-replit-sync` migrates a Postgres `stripe` schema and syncs payment data through a managed webhook at `/api/stripe/webhook`
-- Fonts: JetBrains Mono only, self-hosted via @fontsource/jetbrains-mono (400/500/700)
+- Fonts: JetBrains Mono self-hosted via @fontsource/jetbrains-mono (400/500/700); Gladiator (single cut, self-hosted TTF at `src/assets/fonts/`) for the INDEX masthead titles only, set at font-weight normal, never below 28px, never UI or body
 - Markdown rendering: `marked` (the only parser dependency)
 
 ## Where things live
@@ -62,7 +62,7 @@ One page: INDEX header, single Prompts tab, filter input (`/` focuses, Esc clear
 - Approved brand direction: the FRANCIS VALENTE specimen at `attached_assets/francis_valente_brand_spec_1787401127952.html`; kit boards are canvas iframes backed by `artifacts/mockup-sandbox/src/components/mockups/brand-kit/`
 - Reusable assets: `attached_assets/brand/` (tokens.css, tokens.json, fonts/, marks/) plus the bundle `attached_assets/francis-valente-brand-kit.zip`
 - Rules: Gladiator is display-only (wordmark and large display moments, never below ~28px, never UI labels or body); orange #ff5c00 marks active/focused/copied states only, never decoration; a light context (#ffffff background, same ink/muted/accent) is approved in the spec
-- The live site still follows the build brief (JetBrains Mono only); adopting Gladiator on the site requires an explicit user decision
+- The site uses Gladiator for the page titles only (explicit user decision, August 2026); every other element stays JetBrains Mono per the brief
 
 ## Pointers
 
