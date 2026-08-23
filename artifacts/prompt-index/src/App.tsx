@@ -494,6 +494,15 @@ const PATH_TO_TAB = new Map<string, TabKey>(
   (Object.entries(TAB_PATHS) as [TabKey, string][]).map(([key, tabPath]) => [tabPath, key]),
 );
 
+// Human-readable tab names for the document title, matching the nav labels.
+const TAB_TITLES: Record<TabKey, string> = {
+  prompts: 'Prompts',
+  brand: 'Brand skill',
+  launch: 'Launch ready',
+  capabilities: 'Capabilities',
+  connect: 'Connect',
+};
+
 function App() {
   const [location, navigate] = useLocation();
   // Tolerate trailing slashes ("/connect/" === "/connect"); unknown paths fall back to Prompts.
@@ -505,6 +514,12 @@ function App() {
   };
   const [filter, setFilter] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Set a distinct title per tab so history entries, bookmarks, and shared
+  // links are distinguishable. Runs on load and on every tab switch.
+  useEffect(() => {
+    document.title = `Index — ${TAB_TITLES[tab]}`;
+  }, [tab]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
