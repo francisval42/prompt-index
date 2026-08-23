@@ -1,23 +1,23 @@
-import { Card, CardContent } from '@/components/ui/card';
-import { AlertCircle } from 'lucide-react';
-
+// Not wired to any route yet: the router in main.tsx sends unknown paths to
+// the index. Kept on-brand so future routing work can mount it as-is.
 export default function NotFound() {
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-gray-50">
-      <Card className="w-full max-w-md mx-4">
-        <CardContent className="pt-6">
-          <div className="flex mb-4 gap-2">
-            <AlertCircle className="h-8 w-8 text-red-500" />
-            <h1 className="text-2xl font-bold text-gray-900">
-              404 Page Not Found
-            </h1>
-          </div>
-
-          <p className="mt-4 text-sm text-gray-600">
-            Did you forget to add the page to the router?
-          </p>
-        </CardContent>
-      </Card>
+    <div className="min-h-screen w-full flex items-center justify-center bg-background font-mono text-foreground p-4 sm:p-6">
+      <div className="w-full max-w-lg border border-border p-6 sm:p-8">
+        <h1 className="text-base font-bold uppercase tracking-wide">
+          404 — Page not found
+        </h1>
+        <p className="mt-3 text-sm text-muted">
+          This page doesn&apos;t exist. It may have moved, or the link is
+          wrong.
+        </p>
+        <a
+          href={import.meta.env.BASE_URL}
+          className="mt-6 inline-block border border-border px-6 py-3 text-sm font-bold text-accent hover:bg-[#111] active:bg-[#111] touch-manipulation focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent outline-none transition-none"
+        >
+          Back to index
+        </a>
+      </div>
     </div>
   );
 }
