@@ -7,6 +7,7 @@ import brandSkillExampleRaw from '../content/brand-skill/example.md?raw';
 const promptModules = import.meta.glob('../content/prompts/*.md', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
 const launchReadyModules = import.meta.glob('../content/launch-ready/*.md', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
 const capabilityModules = import.meta.glob('../content/capabilities/*.md', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
+const connectModules = import.meta.glob('../content/connect/*.md', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
 
 const CATEGORY_ORDER = [
   "Protocols",
@@ -71,6 +72,11 @@ const capabilityDocs = Object.values(capabilityModules)
   .filter(Boolean)
   .sort((a: any, b: any) => Number(a.order) - Number(b.order));
 
+const connectDocs = Object.values(connectModules)
+  .map(parsePrompt)
+  .filter(Boolean)
+  .sort((a: any, b: any) => Number(a.order) - Number(b.order));
+
 const LAUNCH_STEPS = [
   '1. Copy the build rules into replit.md before the first prompt. Other tools: CLAUDE.md, .cursor/rules, or attach the file at chat start.',
   '2. Paste the kickoff prompt. The AI confirms the rules, asks the setup questions, builds the scaffold before any feature.',
@@ -78,6 +84,15 @@ const LAUNCH_STEPS = [
   '4. Every few features, run a checkpoint sweep: access, duplicates, secrets, schema, queries.',
   '5. Before launch, run the audit as a second user. Fix every critical.',
   '6. Rotate every key. Launch.',
+];
+
+const CONNECT_STEPS = [
+  '1. List what Claude needs to reach. Email, calendar, files, CRM, one line per service.',
+  '2. Check the directory first. claude.ai: Settings > Connectors. Claude Code: /mcp. If the service is there, connect it, test it, stop.',
+  '3. No connector? Confirm the service has an API and your plan includes API access. No API, no build.',
+  '4. Set up API access with 1-API-ACCESS. Complete the checklist before any code exists.',
+  '5. Build the server with 2-BUILD-PROMPTS. Every write sits behind confirmed=true.',
+  '6. Register and test with 3-CONNECT-AND-TEST. Keep the troubleshooting card.',
 ];
 
 function copyText(text: string, done: () => void) {
@@ -100,6 +115,18 @@ function copyText(text: string, done: () => void) {
     }
     textArea.remove();
   }
+}
+
+function downloadText(filename: string, text: string) {
+  const blob = new Blob([text], { type: 'text/markdown' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 function PromptRow({ prompt }: { prompt: any }) {
@@ -362,8 +389,97 @@ function CapabilitiesPage() {
   );
 }
 
+function ConnectDocRow({ doc }: { doc: any }) {
+  const [expanded, setExpanded] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (copied) return;
+    copyText(doc.body, () => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1000);
+    });
+  };
+
+  const handleDownload = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    downloadText(doc.file, doc.body);
+  };
+
+  const panelId = `connect-panel-${doc.order}`;
+
+  return (
+    <div className="border-b border-border group">
+      <div
+        onClick={() => setExpanded(!expanded)}
+        className="flex flex-col sm:flex-row sm:items-center py-3 gap-2 sm:gap-4 hover:bg-[#111] cursor-pointer transition-none"
+      >
+        <div className="text-muted w-10 shrink-0 hidden sm:block">{doc.order}</div>
+        <button
+          type="button"
+          aria-expanded={expanded}
+          aria-controls={panelId}
+          onClick={e => {
+            e.stopPropagation();
+            setExpanded(!expanded);
+          }}
+          className="text-foreground flex-1 font-medium flex gap-2 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:-outline-offset-2 outline-none"
+        >
+          <span className="sm:hidden text-muted">{doc.order}</span>
+          {doc.title}
+        </button>
+        <div className="text-muted text-sm shrink-0 sm:w-48">{doc.file}</div>
+        <button
+          type="button"
+          onClick={handleDownload}
+          className="shrink-0 self-start sm:self-auto sm:w-24 text-left sm:text-right font-bold text-muted hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent outline-none"
+        >
+          DOWNLOAD
+        </button>
+        <button
+          type="button"
+          onClick={handleCopy}
+          className={`shrink-0 self-start sm:self-auto sm:w-20 text-left sm:text-right font-bold focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent outline-none ${copied ? 'text-accent' : 'text-muted hover:text-foreground'}`}
+        >
+          {copied ? 'COPIED' : 'COPY'}
+        </button>
+      </div>
+
+      {expanded && (
+        <div id={panelId} className="py-8 bg-background border-t border-border cursor-auto">
+          <div
+            className="prose prose-invert prose-p:leading-relaxed prose-pre:bg-[#111] prose-pre:border prose-pre:border-border max-w-3xl mx-auto prose-hr:border-border prose-headings:font-bold prose-headings:text-foreground"
+            dangerouslySetInnerHTML={{ __html: marked.parse(doc.body) as string }}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ConnectPage() {
+  return (
+    <div className="flex flex-col gap-10 pb-16">
+      <ol className="flex flex-col gap-3">
+        {CONNECT_STEPS.map(step => (
+          <li key={step}>{step}</li>
+        ))}
+      </ol>
+
+      <section className="flex flex-col">
+        <div className="border-t border-border flex flex-col">
+          {connectDocs.map((doc: any) => (
+            <ConnectDocRow key={doc.order} doc={doc} />
+          ))}
+        </div>
+      </section>
+    </div>
+  );
+}
+
 function App() {
-  const [tab, setTab] = useState<'prompts' | 'brand' | 'launch' | 'capabilities'>('prompts');
+  const [tab, setTab] = useState<'prompts' | 'brand' | 'launch' | 'capabilities' | 'connect'>('prompts');
   const [filter, setFilter] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -422,7 +538,8 @@ function App() {
         <h1 className="font-display font-normal text-3xl sm:text-4xl leading-none uppercase tracking-[.015em]">INDEX</h1>
       </header>
       
-      <nav className="px-4 sm:px-8 border-b border-border flex items-end h-12 gap-2">
+      <nav className="overflow-x-auto">
+        <div className="px-4 sm:px-8 border-b border-border flex items-end h-12 gap-2 w-max min-w-full">
         <button
           type="button"
           onClick={() => setTab('prompts')}
@@ -451,6 +568,14 @@ function App() {
         >
           Capabilities
         </button>
+        <button
+          type="button"
+          onClick={() => setTab('connect')}
+          className={`h-full flex items-center px-2 -mb-[1px] border-b-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:-outline-offset-2 outline-none ${tab === 'connect' ? 'border-accent text-foreground font-medium' : 'border-transparent text-muted hover:text-foreground'}`}
+        >
+          Connect
+        </button>
+        </div>
       </nav>
 
       <main className="flex-1 max-w-5xl w-full mx-auto p-4 sm:p-8 flex flex-col gap-10">
@@ -460,6 +585,8 @@ function App() {
           <LaunchReadyPage />
         ) : tab === 'capabilities' ? (
           <CapabilitiesPage />
+        ) : tab === 'connect' ? (
+          <ConnectPage />
         ) : (
           <>
             <div>
