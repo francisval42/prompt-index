@@ -6,6 +6,7 @@ import brandSkillExampleRaw from '../content/brand-skill/example.md?raw';
 // Load all markdown files
 const promptModules = import.meta.glob('../content/prompts/*.md', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
 const launchReadyModules = import.meta.glob('../content/launch-ready/*.md', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
+const capabilityModules = import.meta.glob('../content/capabilities/*.md', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
 
 const CATEGORY_ORDER = [
   "Protocols",
@@ -61,6 +62,11 @@ const BRAND_STEPS = [
 const brandSkillExample = parsePrompt(brandSkillExampleRaw);
 
 const launchReadyDocs = Object.values(launchReadyModules)
+  .map(parsePrompt)
+  .filter(Boolean)
+  .sort((a: any, b: any) => Number(a.order) - Number(b.order));
+
+const capabilityDocs = Object.values(capabilityModules)
   .map(parsePrompt)
   .filter(Boolean)
   .sort((a: any, b: any) => Number(a.order) - Number(b.order));
@@ -284,8 +290,80 @@ function LaunchReadyPage() {
   );
 }
 
+function CapabilityRow({ doc }: { doc: any }) {
+  const [expanded, setExpanded] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = (e: React.MouseEvent | React.KeyboardEvent) => {
+    e.stopPropagation();
+    if (copied) return;
+    copyText(doc.body, () => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1000);
+    });
+  };
+
+  const num = String(doc.order).padStart(2, '0');
+  const panelId = `capability-panel-${doc.order}`;
+
+  return (
+    <div className="border-b border-border group">
+      <div
+        onClick={() => setExpanded(!expanded)}
+        className="flex flex-col sm:flex-row sm:items-center py-3 gap-2 sm:gap-4 hover:bg-[#111] cursor-pointer transition-none"
+      >
+        <div className="text-muted w-10 shrink-0 hidden sm:block">{num}</div>
+        <button
+          type="button"
+          aria-expanded={expanded}
+          aria-controls={panelId}
+          onClick={e => {
+            e.stopPropagation();
+            setExpanded(!expanded);
+          }}
+          className="text-foreground font-medium flex gap-2 sm:w-72 shrink-0 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:-outline-offset-2 outline-none"
+        >
+          <span className="sm:hidden text-muted">{num}</span>
+          {doc.title}
+        </button>
+        <div className="text-muted text-sm flex-1">{doc.summary}</div>
+        <button
+          type="button"
+          onClick={handleCopy}
+          className={`shrink-0 self-start sm:self-auto sm:w-20 text-left sm:text-right font-bold focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent outline-none ${copied ? 'text-accent' : 'text-muted hover:text-foreground'}`}
+        >
+          {copied ? 'COPIED' : 'COPY'}
+        </button>
+      </div>
+
+      {expanded && (
+        <div id={panelId} className="py-8 bg-background border-t border-border cursor-auto">
+          <div
+            className="prose prose-invert prose-p:leading-relaxed prose-pre:bg-[#111] prose-pre:border prose-pre:border-border max-w-3xl mx-auto prose-hr:border-border prose-headings:font-bold prose-headings:text-foreground"
+            dangerouslySetInnerHTML={{ __html: marked.parse(doc.body) as string }}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function CapabilitiesPage() {
+  return (
+    <div className="flex flex-col gap-10 pb-16">
+      <section className="flex flex-col">
+        <div className="border-t border-border flex flex-col">
+          {capabilityDocs.map((doc: any) => (
+            <CapabilityRow key={doc.order} doc={doc} />
+          ))}
+        </div>
+      </section>
+    </div>
+  );
+}
+
 function App() {
-  const [tab, setTab] = useState<'prompts' | 'brand' | 'launch'>('prompts');
+  const [tab, setTab] = useState<'prompts' | 'brand' | 'launch' | 'capabilities'>('prompts');
   const [filter, setFilter] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -366,6 +444,13 @@ function App() {
         >
           Launch ready
         </button>
+        <button
+          type="button"
+          onClick={() => setTab('capabilities')}
+          className={`h-full flex items-center px-2 -mb-[1px] border-b-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:-outline-offset-2 outline-none ${tab === 'capabilities' ? 'border-accent text-foreground font-medium' : 'border-transparent text-muted hover:text-foreground'}`}
+        >
+          Capabilities
+        </button>
       </nav>
 
       <main className="flex-1 max-w-5xl w-full mx-auto p-4 sm:p-8 flex flex-col gap-10">
@@ -373,6 +458,8 @@ function App() {
           <BrandSkillPage />
         ) : tab === 'launch' ? (
           <LaunchReadyPage />
+        ) : tab === 'capabilities' ? (
+          <CapabilitiesPage />
         ) : (
           <>
             <div>
