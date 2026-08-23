@@ -1,0 +1,246 @@
+mkdir -p artifacts/prompt-index/content/connect
+
+cat > artifacts/prompt-index/content/connect/0-start-here.md << 'CONNECTEOF'
+---
+order: 0
+file: 0-START-HERE.md
+title: The six step process
+updated: 2026-08-23
+---
+
+0-START-HERE
+
+THE PROCESS
+
+1. List what Claude needs to reach. Email, calendar, files, CRM, phones,
+   whatever the job touches. One line per service.
+
+2. Check the directory. claude.ai settings > Connectors > browse the
+   directory. Claude Code: /mcp. If the service is there, connect it,
+   authorise the account, test with one real task. You are done. Stop.
+
+3. No connector? Confirm the service has an API and your plan includes
+   API access. No API, no build.
+
+4. Set up API access with 1-API-ACCESS. App registration, tenant,
+   redirect URI, scopes, secrets. Complete the checklist before any
+   code exists.
+
+5. Build the server with 2-BUILD-PROMPTS. Prompt A builds a backend
+   with an MCP server from scratch. Prompt B wraps an existing backend.
+   Either way, every write sits behind confirmed=true.
+
+6. Register and test with 3-CONNECT-AND-TEST. Add the /mcp endpoint as
+   a custom connector, run the smoke tests, keep the troubleshooting
+   card for the day the tools vanish.
+
+RULES
+
+- Connector before custom. Always check the directory first, it grows
+  every month.
+- One server per service, not one per task.
+- Writes preview by default. Nothing sends, deletes or books without
+  confirmed=true.
+- Secrets live in Replit Secrets, never in code, never in the prompt.
+- New scopes invalidate old logins. Build a sign-out button on day one
+  and use it after every scope change.
+CONNECTEOF
+
+cat > artifacts/prompt-index/content/connect/1-api-access.md << 'CONNECTEOF'
+---
+order: 1
+file: 1-API-ACCESS.md
+title: The auth checklist
+updated: 2026-08-23
+---
+
+1-API-ACCESS
+
+THE CHECKLIST
+
+1. Find the developer portal. Microsoft: Azure Portal > App
+   registrations. Google: Cloud Console > Credentials. Anything else:
+   search "<service> developer API" (replace <service> with the tool
+   you are connecting).
+
+2. Register one app per service. Name it after the tool, not the task.
+   The same registration can back other builds later.
+
+3. Account audience. Decide who can sign in: work accounts only, or
+   work plus personal. Wrong audience fails login with no useful error.
+   Microsoft: this is signInAudience, and tenant "common" covers both.
+
+4. Platform type is Web. Not Mobile, not Desktop. An app on Replit
+   authenticating through a browser redirect is a Web platform. Wrong
+   type rejects the redirect silently.
+
+5. Redirect URI. The exact live URL, not localhost.
+   https://yourapp.replit.app/auth/callback
+   (replace yourapp with your actual Replit app name). Scheme, host
+   and path must match character for character. Add localhost as a
+   second URI only if you also run it locally.
+
+6. Scopes. List every permission the build needs, read and write, and
+   always include the refresh token scope: offline_access on
+   Microsoft, access_type=offline on Google. Without it you log in
+   again every hour.
+
+7. Secrets. Client ID, tenant ID and client secret go into Replit
+   Secrets as environment variables. Never in code, never in a prompt,
+   never in git.
+
+8. Secret expiry. Client secrets expire, Microsoft defaults to six
+   months. Pick the longest allowed and diarise the renewal.
+
+THE TRAPS
+
+- New scopes kill old logins. Add a scope and the app loops: login
+  screen, sign-in flash, login screen, no error anywhere. The stored
+  token no longer covers the scopes. Sign out, clear the session, log
+  in fresh. This is why the sign-out button is a day one feature.
+
+- Redirect URI mismatch. Fails silently or with a generic error. When
+  login breaks, check this before anything else.
+
+- Admin consent. Some scopes on work tenants need an admin to approve
+  the app once. If login works on a personal account but not the work
+  one, this is it.
+CONNECTEOF
+
+cat > artifacts/prompt-index/content/connect/2-build-prompts.md << 'CONNECTEOF'
+---
+order: 2
+file: 2-BUILD-PROMPTS.md
+title: The two build prompts
+updated: 2026-08-23
+---
+
+2-BUILD-PROMPTS
+
+Two prompts. A builds the whole thing from nothing. B adds an MCP
+server to a backend that already exists. Anything in < > is a
+placeholder, each one says what to replace it with.
+
+PROMPT A - BUILD FROM SCRATCH
+
+Build a backend service that connects <service> (replace with the
+tool, e.g. Xero) to Claude over MCP.
+
+Stack: Node/Express on Replit. No frontend beyond a single status
+page.
+
+Auth:
+- OAuth2 against the <service> API. Client ID, client secret, and
+  tenant ID if the provider uses one, come from Replit Secrets as
+  environment variables. Never hardcode them.
+- Request refresh tokens and store them server-side. Refresh access
+  tokens silently.
+- Status page shows: signed in as which account, a sign-in button
+  and a sign-out button. Sign-out clears the stored session
+  completely.
+- Redirect URI is the live app URL + /auth/callback.
+
+MCP server:
+- Expose an MCP server over HTTP at /mcp using
+  @modelcontextprotocol/sdk.
+- Tools: <list the reads and writes you need, one per line, e.g.
+  list_invoices, read_invoice, create_invoice>.
+- Every write tool takes confirmed (boolean). confirmed=false
+  returns a full preview of what would happen. confirmed=true
+  executes. Never execute without it.
+- Tool descriptions state exactly what the tool does and what it
+  returns.
+
+Rules:
+- Secrets never reach the frontend, the code or the logs.
+- API errors surface the real message, not a generic failure.
+- README documents every tool, the auth flow and the /mcp URL.
+
+PROMPT B - WRAP AN EXISTING BACKEND
+
+Add an MCP server to this app without changing how it currently
+works.
+
+- Install @modelcontextprotocol/sdk.
+- Expose an MCP server over HTTP at /mcp.
+- Wrap the existing backend functions as tools. Do not rewrite any
+  logic, wrap what exists.
+- Tools: <list the functions to expose, or delete this line and ask
+  the agent to propose a list from the codebase>.
+- Every write tool takes confirmed (boolean). confirmed=false
+  returns a preview. confirmed=true executes.
+- Reuse the app's existing auth and session. If the session is
+  missing or expired, tools return a clear "sign in via the web app
+  first" message instead of failing silently.
+- The web app keeps running exactly as before. Confirm both work.
+- README gains a section: the tool list and the /mcp URL.
+
+AFTER EITHER PROMPT
+
+- Test sign-in on the status page before touching MCP.
+- Open the /mcp URL in a browser. An error response is fine, a
+  timeout is not.
+- Go to 3-CONNECT-AND-TEST.
+CONNECTEOF
+
+cat > artifacts/prompt-index/content/connect/3-connect-and-test.md << 'CONNECTEOF'
+---
+order: 3
+file: 3-CONNECT-AND-TEST.md
+title: Register, test, troubleshoot
+updated: 2026-08-23
+---
+
+3-CONNECT-AND-TEST
+
+REGISTER
+
+1. Deploy the app. A workspace preview sleeps, and a sleeping server
+   fails the MCP handshake. Deploy it so the /mcp URL stays up.
+
+2. Sign in once via the app's status page. Session-based servers
+   expose nothing until someone is signed in.
+
+3. claude.ai: Settings > Connectors > Add custom connector. Name it
+   and paste the MCP URL:
+   https://<yourapp>.replit.app/mcp
+   (replace <yourapp> with your Replit app name).
+   Claude Code: claude mcp add --transport http <name> <url>
+   (replace <name> with what you want to call the server, <url>
+   with the same MCP URL).
+
+4. Start a fresh chat. Tool lists load at session start, never
+   mid-chat. Every fix in this doc ends with a new chat.
+
+SMOKE TESTS
+
+1. Read. Ask for something only the new server knows, e.g. "list my
+   latest <thing>" (replace <thing> with whatever the service
+   holds). Watch which tool fires. Yours, not a built-in.
+
+2. Preview. Ask for a write and expect a preview back, not an
+   action. If it executes without asking, stop and fix
+   confirmed=true before anything else.
+
+3. Write. Confirm the preview, then check the result in the real
+   service, not just the chat.
+
+THE CARD - WHEN TOOLS VANISH
+
+- Fresh chat first. No fix shows up in the session that broke.
+- Server asleep. Open the app URL in a browser. If it takes seconds
+  to respond, that was the problem. Deploy properly.
+- Signed out. Open the status page. If it shows the sign-in button,
+  log in and retry.
+- Registered but no tools. Replit logs, look for errors on
+  initialize or tools/list. That is the handshake failing.
+- Tools vanished after adding a tool. One malformed schema silently
+  sinks the whole list. Suspect the newest tool.
+- Wrong tools firing. A built-in connector for the same service is
+  answering first. Disable one of them, or name your server in the
+  ask.
+CONNECTEOF
+
+git add artifacts/prompt-index/content/connect
+git commit -m "Add Connect pack content"
+git push
