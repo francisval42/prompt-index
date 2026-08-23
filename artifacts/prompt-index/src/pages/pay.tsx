@@ -67,13 +67,20 @@ const appearance: Appearance = {
   },
 };
 
+function appearanceForViewport(): Appearance {
+  if (typeof window !== 'undefined' && window.matchMedia('(max-width: 639px)').matches) {
+    return { ...appearance, variables: { ...appearance.variables, fontSizeBase: '16px' } };
+  }
+  return appearance;
+}
+
 const labelClass = 'text-xs uppercase tracking-wider text-muted font-medium';
 const inputClass =
   'w-full bg-transparent border border-border px-4 py-3 text-foreground focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-none placeholder:text-muted';
 const buttonClass =
-  'border border-border px-6 py-3 font-bold text-foreground hover:bg-[#111] focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent outline-none transition-none disabled:text-muted disabled:hover:bg-transparent disabled:cursor-not-allowed';
+  'border border-border px-6 py-3 font-bold text-foreground hover:bg-[#111] active:bg-[#111] touch-manipulation focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent outline-none transition-none disabled:text-muted disabled:hover:bg-transparent disabled:cursor-not-allowed';
 const textButtonClass =
-  'font-bold text-muted hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent outline-none transition-none disabled:cursor-not-allowed';
+  'font-bold text-muted hover:text-foreground active:text-foreground py-3 -my-3 px-3 -mx-3 touch-manipulation focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent outline-none transition-none disabled:cursor-not-allowed';
 
 type FinalStatus = 'succeeded' | 'processing';
 
@@ -157,13 +164,14 @@ function CheckoutForm({
 
 export default function PayPage() {
   const [stripePromise, setStripePromise] = useState<Promise<Stripe | null> | null>(null);
+  const [stripeAppearance] = useState(appearanceForViewport);
   const [configError, setConfigError] = useState<string | null>(null);
   const [configNonce, setConfigNonce] = useState(0);
 
   const [phase, setPhase] = useState<'input' | 'element' | 'done'>('input');
   const [amount, setAmount] = useState('');
   const [reference, setReference] = useState('');
-  const [inputError, setInputError] = useState<string | null>(null);
+  const [inputError, setInputError] = useState<{ field: 'amount' | 'reference' | 'form'; message: string } | null>(null);
   const [creating, setCreating] = useState(false);
 
   const [clientSecret, setClientSecret] = useState<string | null>(null);
@@ -190,12 +198,12 @@ export default function PayPage() {
     if (creating) return;
     const cents = parseAmountToCents(amount);
     if (cents == null || cents < MIN_CENTS || cents > MAX_CENTS) {
-      setInputError('Enter an amount between A$1.00 and A$10,000.00.');
+      setInputError({ field: 'amount', message: 'Enter an amount between A$1.00 and A$10,000.00.' });
       return;
     }
     const ref = reference.trim();
     if (ref.length > 200) {
-      setInputError('Reference must be 200 characters or fewer.');
+      setInputError({ field: 'reference', message: 'Reference must be 200 characters or fewer.' });
       return;
     }
 
@@ -211,7 +219,7 @@ export default function PayPage() {
       setClientSecret(res.clientSecret);
       setPhase('element');
     } catch (err) {
-      setInputError(extractErrorMessage(err, 'Could not start payment. Try again.'));
+      setInputError({ field: 'form', message: extractErrorMessage(err, 'Could not start payment. Try again.') });
     } finally {
       setCreating(false);
     }
@@ -232,7 +240,7 @@ export default function PayPage() {
   };
 
   return (
-    <div className="min-h-[100dvh] bg-background text-foreground flex flex-col font-mono text-sm sm:text-base">
+    <div className="min-h-[100dvh] bg-background text-foreground flex flex-col font-mono text-base">
       <header className="px-4 py-6 sm:px-8 border-b border-border">
         <h1 className="font-display font-normal text-3xl sm:text-4xl leading-none uppercase tracking-[.015em]">INDEX</h1>
       </header>
@@ -264,9 +272,13 @@ export default function PayPage() {
                     type="text"
                     inputMode="decimal"
                     autoComplete="off"
+                    enterKeyHint="go"
                     placeholder="0.00"
                     value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
+                    onChange={(e) => {
+                      setAmount(e.target.value);
+                      if (inputError?.field === 'amount') setInputError(null);
+                    }}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') void handleContinue();
                     }}
@@ -276,6 +288,9 @@ export default function PayPage() {
                 <div className="text-xs text-muted">
                   Minimum A$1.00, maximum A$10,000.00.
                 </div>
+                {inputError?.field === 'amount' && (
+                  <div className="text-accent">{inputError.message}</div>
+                )}
               </div>
 
               <div className="flex flex-col gap-2">
@@ -286,25 +301,32 @@ export default function PayPage() {
                   id="pay-reference"
                   type="text"
                   autoComplete="off"
+                  enterKeyHint="go"
                   maxLength={200}
                   placeholder="Invoice number, name, note..."
                   value={reference}
-                  onChange={(e) => setReference(e.target.value)}
+                  onChange={(e) => {
+                    setReference(e.target.value);
+                    if (inputError?.field === 'reference') setInputError(null);
+                  }}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') void handleContinue();
                   }}
                   className={inputClass}
                 />
+                {inputError?.field === 'reference' && (
+                  <div className="text-accent">{inputError.message}</div>
+                )}
               </div>
 
-              {inputError && <div className="text-accent">{inputError}</div>}
+              {inputError?.field === 'form' && <div className="text-accent">{inputError.message}</div>}
               {configError && (
                 <div className="text-accent">
                   {configError}{' '}
                   <button
                     type="button"
                     onClick={() => setConfigNonce((n) => n + 1)}
-                    className="underline font-bold focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent outline-none"
+                    className="underline font-bold p-2 -m-2 touch-manipulation focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent outline-none"
                   >
                     RETRY
                   </button>
@@ -342,7 +364,7 @@ export default function PayPage() {
               <Elements
                 key={clientSecret}
                 stripe={stripePromise}
-                options={{ clientSecret, appearance }}
+                options={{ clientSecret, appearance: stripeAppearance }}
               >
                 <CheckoutForm
                   amountCents={amountCents}

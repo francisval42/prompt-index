@@ -39,7 +39,7 @@ A single-page personal index of AI prompts for francisvalente.com: find a prompt
 
 ## Product
 
-One page: INDEX header, single Prompts tab, filter input (`/` focuses, Esc clears, case-insensitive substring across id/title/category/type/platforms), categories in fixed order (Protocols, Discovery, Generation, Repairs, Review, Builds; empty ones vanish entirely), dense hairline rows that expand inline to rendered markdown, COPY button copying the raw body exactly.
+Five tabs with stable URLs (Prompts `/`, Brand skill `/brand`, Launch ready `/launch`, Capabilities `/capabilities`, Connect `/connect`): INDEX header, filter input on Prompts (`/` focuses, Esc clears, case-insensitive substring across id/title/category/type/platforms), categories in fixed order (Protocols, Discovery, Generation, Repairs, Review, Builds; empty ones vanish entirely), dense hairline rows that expand inline to rendered markdown, COPY buttons copying raw bodies exactly, DOWNLOAD on Connect saving each doc under its frontmatter file name. Mobile: 16px base text, 44px tap targets, horizontally scrollable nav.
 
 `/pay` (unlisted, not in the nav): custom AUD amount (min A$1, max A$10,000) plus optional reference (≤200 chars) → embedded dark-themed Stripe Payment Element (billing country defaults to AU) → PAID / error-with-retry states. Same design language as the index; deliberately no products, subscriptions, auth, saved cards, or refunds.
 
@@ -57,6 +57,10 @@ One page: INDEX header, single Prompts tab, filter input (`/` focuses, Esc clear
 - The Stripe webhook route must stay registered with `express.raw` BEFORE `express.json` in `app.ts` (signature verification needs the raw body)
 - `stripe-replit-sync` must stay in the esbuild `external` list in `api-server/build.mjs` — bundling it makes its migrations a silent no-op
 - Keep `trust proxy` set to `1` (not `true`) in `app.ts`; trusting the whole chain lets clients spoof `req.ip` past the rate limiter
+- Mobile rules: the site root stays `text-base` and every input at 16px or more, or iOS zooms on focus; the viewport meta must never regain `maximum-scale`
+- Text-action buttons (COPY, DOWNLOAD, BACK) get 44px tap boxes via `py-3 sm:-my-3 px-3 -mx-3 sm:px-0 sm:mx-0`: vertical padding stays real on phones (negative margins would overlap the stacked controls above and below) and turns invisible from `sm:` where rows are single-line; reuse for new text actions
+- `PayPage` is lazy-loaded in `main.tsx`; never import it or `@stripe/*` statically from index code, that puts Stripe.js back on every page
+- Markdown prose containers need `[overflow-wrap:anywhere]` and `prose-pre:overflow-x-auto`; long tokens otherwise stretch the page sideways on phones
 
 ## Brand
 

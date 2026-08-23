@@ -164,7 +164,7 @@ function PromptRow({ prompt }: { prompt: any }) {
             setExpanded(!expanded);
           }
         }}
-        className="flex flex-col sm:flex-row sm:items-center py-3 gap-2 sm:gap-4 hover:bg-[#111] focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:-outline-offset-2 cursor-pointer transition-none outline-none"
+        className="flex flex-col sm:flex-row sm:items-center py-3 gap-2 sm:gap-4 hover:bg-[#111] active:bg-[#111] touch-manipulation focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:-outline-offset-2 cursor-pointer transition-none outline-none"
       >
         <div className="text-muted w-10 shrink-0 hidden sm:block">{prompt.id}</div>
         <div className="text-foreground flex-1 font-medium flex gap-2">
@@ -186,7 +186,7 @@ function PromptRow({ prompt }: { prompt: any }) {
               handleCopy(e);
             }
           }}
-          className={`shrink-0 self-start sm:self-auto sm:w-20 text-left sm:text-right font-bold focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent outline-none ${copied ? 'text-accent' : 'text-muted hover:text-foreground'}`}
+          className={`shrink-0 self-start sm:self-auto sm:w-20 text-left sm:text-right font-bold py-3 sm:-my-3 px-3 -mx-3 sm:px-0 sm:mx-0 touch-manipulation focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent outline-none ${copied ? 'text-accent' : 'text-muted hover:text-foreground active:text-foreground'}`}
           tabIndex={0}
         >
           {copied ? 'COPIED' : 'COPY'}
@@ -196,7 +196,7 @@ function PromptRow({ prompt }: { prompt: any }) {
       {expanded && (
         <div className="py-8 bg-background border-t border-border cursor-auto">
           <div 
-            className="prose prose-invert prose-p:leading-relaxed prose-pre:bg-[#111] prose-pre:border prose-pre:border-border max-w-3xl mx-auto prose-hr:border-border prose-headings:font-bold prose-headings:text-foreground"
+            className="prose prose-invert [overflow-wrap:anywhere] prose-p:leading-relaxed prose-pre:overflow-x-auto prose-pre:bg-[#111] prose-pre:border prose-pre:border-border max-w-3xl mx-auto prose-hr:border-border prose-headings:font-bold prose-headings:text-foreground"
             dangerouslySetInnerHTML={{ __html: marked.parse(prompt.body) as string }}
           />
         </div>
@@ -229,7 +229,7 @@ function BrandSkillPage() {
           <h2 className="text-xs tracking-wider text-muted font-medium">WORKED EXAMPLE: francis-valente-brand</h2>
           <button
             onClick={handleCopy}
-            className={`shrink-0 font-bold focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent outline-none ${copied ? 'text-accent' : 'text-muted hover:text-foreground'}`}
+            className={`shrink-0 font-bold py-3 -my-3 px-3 -mx-3 touch-manipulation focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent outline-none ${copied ? 'text-accent' : 'text-muted hover:text-foreground active:text-foreground'}`}
             tabIndex={0}
           >
             {copied ? 'COPIED' : 'COPY'}
@@ -237,7 +237,7 @@ function BrandSkillPage() {
         </div>
         <div className="py-8">
           <div
-            className="prose prose-invert prose-p:leading-relaxed prose-pre:bg-[#111] prose-pre:border prose-pre:border-border max-w-3xl mx-auto prose-hr:border-border prose-headings:font-bold prose-headings:text-foreground"
+            className="prose prose-invert [overflow-wrap:anywhere] prose-p:leading-relaxed prose-pre:overflow-x-auto prose-pre:bg-[#111] prose-pre:border prose-pre:border-border max-w-3xl mx-auto prose-hr:border-border prose-headings:font-bold prose-headings:text-foreground"
             dangerouslySetInnerHTML={{ __html: marked.parse(brandSkillExample?.body ?? '') as string }}
           />
         </div>
@@ -272,7 +272,7 @@ function LaunchDocRow({ doc }: { doc: any }) {
             setExpanded(!expanded);
           }
         }}
-        className="flex flex-col sm:flex-row sm:items-center py-3 gap-2 sm:gap-4 hover:bg-[#111] focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:-outline-offset-2 cursor-pointer transition-none outline-none"
+        className="flex flex-col sm:flex-row sm:items-center py-3 gap-2 sm:gap-4 hover:bg-[#111] active:bg-[#111] touch-manipulation focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:-outline-offset-2 cursor-pointer transition-none outline-none"
       >
         <div className="text-muted w-10 shrink-0 hidden sm:block">{doc.order}</div>
         <div className="text-foreground flex-1 font-medium flex gap-2">
@@ -289,7 +289,7 @@ function LaunchDocRow({ doc }: { doc: any }) {
               handleCopy(e);
             }
           }}
-          className={`shrink-0 self-start sm:self-auto sm:w-20 text-left sm:text-right font-bold focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent outline-none ${copied ? 'text-accent' : 'text-muted hover:text-foreground'}`}
+          className={`shrink-0 self-start sm:self-auto sm:w-20 text-left sm:text-right font-bold py-3 sm:-my-3 px-3 -mx-3 sm:px-0 sm:mx-0 touch-manipulation focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent outline-none ${copied ? 'text-accent' : 'text-muted hover:text-foreground active:text-foreground'}`}
           tabIndex={0}
         >
           {copied ? 'COPIED' : 'COPY'}
@@ -299,7 +299,7 @@ function LaunchDocRow({ doc }: { doc: any }) {
       {expanded && (
         <div className="py-8 bg-background border-t border-border cursor-auto">
           <div
-            className="prose prose-invert prose-p:leading-relaxed prose-pre:bg-[#111] prose-pre:border prose-pre:border-border max-w-3xl mx-auto prose-hr:border-border prose-headings:font-bold prose-headings:text-foreground"
+            className="prose prose-invert [overflow-wrap:anywhere] prose-p:leading-relaxed prose-pre:overflow-x-auto prose-pre:bg-[#111] prose-pre:border prose-pre:border-border max-w-3xl mx-auto prose-hr:border-border prose-headings:font-bold prose-headings:text-foreground"
             dangerouslySetInnerHTML={{ __html: marked.parse(doc.body) as string }}
           />
         </div>
@@ -349,7 +349,7 @@ function CapabilityRow({ doc }: { doc: any }) {
     <div ref={rowRef} id={slug} className="border-b border-border group scroll-mt-4">
       <div
         onClick={() => setExpanded(!expanded)}
-        className="flex flex-col sm:flex-row sm:items-center py-3 gap-2 sm:gap-4 hover:bg-[#111] cursor-pointer transition-none"
+        className="flex flex-col sm:flex-row sm:items-center py-3 gap-2 sm:gap-4 hover:bg-[#111] active:bg-[#111] touch-manipulation cursor-pointer transition-none"
       >
         <div className="text-muted w-10 shrink-0 hidden sm:block">{num}</div>
         <button
@@ -369,7 +369,7 @@ function CapabilityRow({ doc }: { doc: any }) {
         <button
           type="button"
           onClick={handleCopy}
-          className={`shrink-0 self-start sm:self-auto sm:w-20 text-left sm:text-right font-bold focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent outline-none ${copied ? 'text-accent' : 'text-muted hover:text-foreground'}`}
+          className={`shrink-0 self-start sm:self-auto sm:w-20 text-left sm:text-right font-bold py-3 sm:-my-3 px-3 -mx-3 sm:px-0 sm:mx-0 touch-manipulation focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent outline-none ${copied ? 'text-accent' : 'text-muted hover:text-foreground active:text-foreground'}`}
         >
           {copied ? 'COPIED' : 'COPY'}
         </button>
@@ -378,7 +378,7 @@ function CapabilityRow({ doc }: { doc: any }) {
       {expanded && (
         <div id={panelId} className="py-8 bg-background border-t border-border cursor-auto">
           <div
-            className="prose prose-invert prose-p:leading-relaxed prose-pre:bg-[#111] prose-pre:border prose-pre:border-border max-w-3xl mx-auto prose-hr:border-border prose-headings:font-bold prose-headings:text-foreground"
+            className="prose prose-invert [overflow-wrap:anywhere] prose-p:leading-relaxed prose-pre:overflow-x-auto prose-pre:bg-[#111] prose-pre:border prose-pre:border-border max-w-3xl mx-auto prose-hr:border-border prose-headings:font-bold prose-headings:text-foreground"
             dangerouslySetInnerHTML={{ __html: marked.parse(doc.body) as string }}
           />
         </div>
@@ -426,7 +426,7 @@ function ConnectDocRow({ doc }: { doc: any }) {
     <div ref={rowRef} id={slug} className="border-b border-border group scroll-mt-4">
       <div
         onClick={() => setExpanded(!expanded)}
-        className="flex flex-col sm:flex-row sm:items-center py-3 gap-2 sm:gap-4 hover:bg-[#111] cursor-pointer transition-none"
+        className="flex flex-col sm:flex-row sm:items-center py-3 gap-2 sm:gap-4 hover:bg-[#111] active:bg-[#111] touch-manipulation cursor-pointer transition-none"
       >
         <div className="text-muted w-10 shrink-0 hidden sm:block">{doc.order}</div>
         <button
@@ -446,14 +446,14 @@ function ConnectDocRow({ doc }: { doc: any }) {
         <button
           type="button"
           onClick={handleDownload}
-          className="shrink-0 self-start sm:self-auto sm:w-24 text-left sm:text-right font-bold text-muted hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent outline-none"
+          className="shrink-0 self-start sm:self-auto sm:w-24 text-left sm:text-right font-bold py-3 sm:-my-3 px-3 -mx-3 sm:px-0 sm:mx-0 touch-manipulation text-muted hover:text-foreground active:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent outline-none"
         >
           DOWNLOAD
         </button>
         <button
           type="button"
           onClick={handleCopy}
-          className={`shrink-0 self-start sm:self-auto sm:w-20 text-left sm:text-right font-bold focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent outline-none ${copied ? 'text-accent' : 'text-muted hover:text-foreground'}`}
+          className={`shrink-0 self-start sm:self-auto sm:w-20 text-left sm:text-right font-bold py-3 sm:-my-3 px-3 -mx-3 sm:px-0 sm:mx-0 touch-manipulation focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent outline-none ${copied ? 'text-accent' : 'text-muted hover:text-foreground active:text-foreground'}`}
         >
           {copied ? 'COPIED' : 'COPY'}
         </button>
@@ -462,7 +462,7 @@ function ConnectDocRow({ doc }: { doc: any }) {
       {expanded && (
         <div id={panelId} className="py-8 bg-background border-t border-border cursor-auto">
           <div
-            className="prose prose-invert prose-p:leading-relaxed prose-pre:bg-[#111] prose-pre:border prose-pre:border-border max-w-3xl mx-auto prose-hr:border-border prose-headings:font-bold prose-headings:text-foreground"
+            className="prose prose-invert [overflow-wrap:anywhere] prose-p:leading-relaxed prose-pre:overflow-x-auto prose-pre:bg-[#111] prose-pre:border prose-pre:border-border max-w-3xl mx-auto prose-hr:border-border prose-headings:font-bold prose-headings:text-foreground"
             dangerouslySetInnerHTML={{ __html: marked.parse(doc.body) as string }}
           />
         </div>
@@ -594,7 +594,7 @@ function App() {
   }
 
   return (
-    <div className="min-h-[100dvh] bg-background text-foreground flex flex-col font-mono text-sm sm:text-base">
+    <div className="min-h-[100dvh] bg-background text-foreground flex flex-col font-mono text-base">
       <header className="px-4 py-6 sm:px-8 border-b border-border">
         <h1 className="font-display font-normal text-3xl sm:text-4xl leading-none uppercase tracking-[.015em]">INDEX</h1>
       </header>
@@ -613,7 +613,7 @@ function App() {
           href={TAB_PATHS.prompts}
           onClick={skipIfActive('prompts')}
           aria-current={tab === 'prompts' ? 'page' : undefined}
-          className={`h-full flex items-center px-2 -mb-[1px] border-b-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:-outline-offset-2 outline-none ${tab === 'prompts' ? 'border-accent text-foreground font-medium' : 'border-transparent text-muted hover:text-foreground'}`}
+          className={`h-full flex items-center px-2 -mb-[1px] border-b-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:-outline-offset-2 outline-none ${tab === 'prompts' ? 'border-accent text-foreground font-medium' : 'border-transparent text-muted hover:text-foreground active:text-foreground'}`}
         >
           Prompts
         </Link>
@@ -621,7 +621,7 @@ function App() {
           href={TAB_PATHS.brand}
           onClick={skipIfActive('brand')}
           aria-current={tab === 'brand' ? 'page' : undefined}
-          className={`h-full flex items-center px-2 -mb-[1px] border-b-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:-outline-offset-2 outline-none ${tab === 'brand' ? 'border-accent text-foreground font-medium' : 'border-transparent text-muted hover:text-foreground'}`}
+          className={`h-full flex items-center px-2 -mb-[1px] border-b-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:-outline-offset-2 outline-none ${tab === 'brand' ? 'border-accent text-foreground font-medium' : 'border-transparent text-muted hover:text-foreground active:text-foreground'}`}
         >
           Brand skill
         </Link>
@@ -629,7 +629,7 @@ function App() {
           href={TAB_PATHS.launch}
           onClick={skipIfActive('launch')}
           aria-current={tab === 'launch' ? 'page' : undefined}
-          className={`h-full flex items-center px-2 -mb-[1px] border-b-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:-outline-offset-2 outline-none ${tab === 'launch' ? 'border-accent text-foreground font-medium' : 'border-transparent text-muted hover:text-foreground'}`}
+          className={`h-full flex items-center px-2 -mb-[1px] border-b-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:-outline-offset-2 outline-none ${tab === 'launch' ? 'border-accent text-foreground font-medium' : 'border-transparent text-muted hover:text-foreground active:text-foreground'}`}
         >
           Launch ready
         </Link>
@@ -637,7 +637,7 @@ function App() {
           href={TAB_PATHS.capabilities}
           onClick={skipIfActive('capabilities')}
           aria-current={tab === 'capabilities' ? 'page' : undefined}
-          className={`h-full flex items-center px-2 -mb-[1px] border-b-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:-outline-offset-2 outline-none ${tab === 'capabilities' ? 'border-accent text-foreground font-medium' : 'border-transparent text-muted hover:text-foreground'}`}
+          className={`h-full flex items-center px-2 -mb-[1px] border-b-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:-outline-offset-2 outline-none ${tab === 'capabilities' ? 'border-accent text-foreground font-medium' : 'border-transparent text-muted hover:text-foreground active:text-foreground'}`}
         >
           Capabilities
         </Link>
@@ -645,7 +645,7 @@ function App() {
           href={TAB_PATHS.connect}
           onClick={skipIfActive('connect')}
           aria-current={tab === 'connect' ? 'page' : undefined}
-          className={`h-full flex items-center px-2 -mb-[1px] border-b-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:-outline-offset-2 outline-none ${tab === 'connect' ? 'border-accent text-foreground font-medium' : 'border-transparent text-muted hover:text-foreground'}`}
+          className={`h-full flex items-center px-2 -mb-[1px] border-b-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:-outline-offset-2 outline-none ${tab === 'connect' ? 'border-accent text-foreground font-medium' : 'border-transparent text-muted hover:text-foreground active:text-foreground'}`}
         >
           Connect
         </Link>
@@ -667,6 +667,11 @@ function App() {
               <input 
                 ref={inputRef}
                 type="text"
+                enterKeyHint="search"
+                autoComplete="off"
+                autoCorrect="off"
+                autoCapitalize="none"
+                spellCheck={false}
                 placeholder="Filter..."
                 value={filter}
                 onChange={e => setFilter(e.target.value)}
