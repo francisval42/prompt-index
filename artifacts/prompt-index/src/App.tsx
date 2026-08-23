@@ -138,6 +138,11 @@ function getHashSlug(): string {
     return raw;
   }
 }
+
+function rowDeepLinkUrl(slug: string): string {
+  const { origin, pathname, search } = window.location;
+  return `${origin}${pathname}${search}#${encodeURIComponent(slug)}`;
+}
 function PromptRow({ prompt }: { prompt: any }) {
   const slug = String(prompt.id);
   const { rowRef, expanded, setExpanded } = useRowDeepLink(slug);
@@ -177,6 +182,7 @@ function PromptRow({ prompt }: { prompt: any }) {
             <span key={p}>{p}</span>
           ))}
         </div>
+        <RowLinkButton slug={slug} />
         <button 
           onClick={handleCopy}
           onKeyDown={e => {
@@ -280,6 +286,7 @@ function LaunchDocRow({ doc }: { doc: any }) {
           {doc.title}
         </div>
         <div className="text-muted text-sm shrink-0 sm:w-48">{doc.file}</div>
+        <RowLinkButton slug={slug} />
         <button
           onClick={handleCopy}
           onKeyDown={e => {
@@ -366,6 +373,7 @@ function CapabilityRow({ doc }: { doc: any }) {
           {doc.title}
         </button>
         <div className="text-muted text-sm flex-1">{doc.summary}</div>
+        <RowLinkButton slug={slug} />
         <button
           type="button"
           onClick={handleCopy}
@@ -450,6 +458,7 @@ function ConnectDocRow({ doc }: { doc: any }) {
         >
           DOWNLOAD
         </button>
+        <RowLinkButton slug={slug} />
         <button
           type="button"
           onClick={handleCopy}
@@ -815,3 +824,34 @@ function replaceHash(slug: string | null) {
 }
 
 let pendingScrollSlug: string | null = getHashSlug() || null;
+
+function RowLinkButton({ slug }: { slug: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopyLink = (e: React.MouseEvent | React.KeyboardEvent) => {
+    e.stopPropagation();
+    if (copied) return;
+    copyText(rowDeepLinkUrl(slug), () => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1000);
+    });
+  };
+
+  return (
+    <button
+      type="button"
+      title="Copy link to this row"
+      onClick={handleCopyLink}
+      onKeyDown={e => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          e.stopPropagation();
+          handleCopyLink(e);
+        }
+      }}
+      className={`shrink-0 self-start sm:self-auto sm:w-16 text-left sm:text-right font-bold focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent outline-none ${copied ? 'text-accent' : 'text-muted hover:text-foreground'}`}
+    >
+      {copied ? 'COPIED' : 'LINK'}
+    </button>
+  );
+}

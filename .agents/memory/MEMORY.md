@@ -4,4 +4,4 @@
 - [Orval zod catalog pin](orval-zod.md) — `"zod": "catalog:"` breaks orval version detection (emits zod v4 syntax); keep the version-3 override in orval.config.ts.
 - [Design subagent crash recovery](design-subagent-crashes.md) — dead subagents usually finished their work; verify files/shapes before redoing, re-apply only shape extras.
 - [Prod boot vs DB provisioning](prod-boot-and-db.md) — prod DB exists only after a successful publish; listen before init or first publish crash-loops. Mirror fatals to stderr, pino buffers die with the process.
-- [Headless hover false negatives](headless-hover-testing.md) — Tailwind v4 gates hover: styles behind @media (hover:hover); headless testers see none. Not a regression.
+- [Headless tester noise](headless-hover-testing.md) — hover: styles absent (Tailwind v4 @media hover gate) and dev CSP inline-style console errors are ambient; neither is a regression.
