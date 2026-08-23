@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Link, useLocation } from 'wouter';
+import { Link, Redirect, useLocation } from 'wouter';
 import { marked } from 'marked';
 
 import brandSkillExampleRaw from '../content/brand-skill/example.md?raw';
@@ -517,9 +517,11 @@ const TAB_TITLES: Record<TabKey, string> = {
 
 function App() {
   const [location] = useLocation();
-  // Tolerate trailing slashes ("/connect/" === "/connect"); unknown paths fall back to Prompts.
+  // Tolerate trailing slashes ("/connect/" === "/connect"); unknown paths
+  // redirect to the index (see the guard after the hooks below).
   const normalizedPath = location.replace(/\/+$/, '') || '/';
-  const tab: TabKey = PATH_TO_TAB.get(normalizedPath) ?? 'prompts';
+  const matchedTab = PATH_TO_TAB.get(normalizedPath);
+  const tab: TabKey = matchedTab ?? 'prompts';
   // Clicking the already-active tab is a no-op so it doesn't stack duplicate history entries.
   const skipIfActive = (key: TabKey) => (e: React.MouseEvent) => {
     if (tab === key) e.preventDefault();
@@ -581,6 +583,15 @@ function App() {
   }, [filteredPrompts]);
 
   const hasResults = filteredPrompts.length > 0;
+
+  // Mistyped or outdated links (e.g. /brands, /launch-ready) land here.
+  // Redirect to the index instead of silently rendering Prompts under the
+  // wrong URL, which would get bookmarked and re-shared. `replace` keeps the
+  // dead URL out of history so Back doesn't bounce through it again.
+  // (Kept after the hooks: both renders must call the same hooks in order.)
+  if (!matchedTab) {
+    return <Redirect to="/" replace />;
+  }
 
   return (
     <div className="min-h-[100dvh] bg-background text-foreground flex flex-col font-mono text-sm sm:text-base">
