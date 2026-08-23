@@ -130,8 +130,17 @@ function downloadText(filename: string, text: string) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
+function getHashSlug(): string {
+  const raw = window.location.hash.replace(/^#/, '');
+  try {
+    return decodeURIComponent(raw);
+  } catch {
+    return raw;
+  }
+}
 function PromptRow({ prompt }: { prompt: any }) {
-  const [expanded, setExpanded] = useState(false);
+  const slug = String(prompt.id);
+  const { rowRef, expanded, setExpanded } = useRowDeepLink(slug);
   const [copied, setCopied] = useState(false);
 
   const handleCopy = (e: React.MouseEvent | React.KeyboardEvent) => {
@@ -144,7 +153,7 @@ function PromptRow({ prompt }: { prompt: any }) {
   };
 
   return (
-    <div className="border-b border-border group">
+    <div ref={rowRef} id={slug} className="border-b border-border group scroll-mt-4">
       <div 
         role="button"
         tabIndex={0}
@@ -238,7 +247,8 @@ function BrandSkillPage() {
 }
 
 function LaunchDocRow({ doc }: { doc: any }) {
-  const [expanded, setExpanded] = useState(false);
+  const slug = String(doc.order);
+  const { rowRef, expanded, setExpanded } = useRowDeepLink(slug);
   const [copied, setCopied] = useState(false);
 
   const handleCopy = (e: React.MouseEvent | React.KeyboardEvent) => {
@@ -251,7 +261,7 @@ function LaunchDocRow({ doc }: { doc: any }) {
   };
 
   return (
-    <div className="border-b border-border group">
+    <div ref={rowRef} id={slug} className="border-b border-border group scroll-mt-4">
       <div
         role="button"
         tabIndex={0}
@@ -319,7 +329,8 @@ function LaunchReadyPage() {
 }
 
 function CapabilityRow({ doc }: { doc: any }) {
-  const [expanded, setExpanded] = useState(false);
+  const slug = String(doc.order);
+  const { rowRef, expanded, setExpanded } = useRowDeepLink(slug);
   const [copied, setCopied] = useState(false);
 
   const handleCopy = (e: React.MouseEvent | React.KeyboardEvent) => {
@@ -335,7 +346,7 @@ function CapabilityRow({ doc }: { doc: any }) {
   const panelId = `capability-panel-${doc.order}`;
 
   return (
-    <div className="border-b border-border group">
+    <div ref={rowRef} id={slug} className="border-b border-border group scroll-mt-4">
       <div
         onClick={() => setExpanded(!expanded)}
         className="flex flex-col sm:flex-row sm:items-center py-3 gap-2 sm:gap-4 hover:bg-[#111] cursor-pointer transition-none"
@@ -391,7 +402,8 @@ function CapabilitiesPage() {
 }
 
 function ConnectDocRow({ doc }: { doc: any }) {
-  const [expanded, setExpanded] = useState(false);
+  const slug = String(doc.order);
+  const { rowRef, expanded, setExpanded } = useRowDeepLink(slug);
   const [copied, setCopied] = useState(false);
 
   const handleCopy = (e: React.MouseEvent) => {
@@ -411,7 +423,7 @@ function ConnectDocRow({ doc }: { doc: any }) {
   const panelId = `connect-panel-${doc.order}`;
 
   return (
-    <div className="border-b border-border group">
+    <div ref={rowRef} id={slug} className="border-b border-border group scroll-mt-4">
       <div
         onClick={() => setExpanded(!expanded)}
         className="flex flex-col sm:flex-row sm:items-center py-3 gap-2 sm:gap-4 hover:bg-[#111] cursor-pointer transition-none"
@@ -679,3 +691,50 @@ function App() {
 }
 
 export default App;
+
+function useRowDeepLink(slug: string) {
+  const rowRef = useRef<HTMLDivElement | null>(null);
+  // A row mounts expanded when the URL hash already points at it (initial
+  // page load, or a remount after tab / back-forward navigation).
+  const [expanded, setExpandedState] = useState(() => getHashSlug() === slug);
+
+  useEffect(() => {
+    if (pendingScrollSlug === slug && getHashSlug() === slug) {
+      pendingScrollSlug = null;
+      requestAnimationFrame(() => rowRef.current?.scrollIntoView({ block: 'start' }));
+    }
+
+    const mountPathname = window.location.pathname;
+    const onHashChange = () => {
+      // Ignore traversals that also switch tabs; the rows that remount for
+      // the new tab handle those via the mount path above.
+      if (window.location.pathname !== mountPathname) return;
+      if (getHashSlug() !== slug) return;
+      pendingScrollSlug = null;
+      setExpandedState(true);
+      requestAnimationFrame(() => rowRef.current?.scrollIntoView({ block: 'start' }));
+    };
+    window.addEventListener('hashchange', onHashChange);
+    return () => window.removeEventListener('hashchange', onHashChange);
+  }, [slug]);
+
+  // Expanding claims the hash for this row; collapsing clears it only if the
+  // row still owns it (another row expanded later may have taken it over).
+  const setExpanded = (next: boolean) => {
+    setExpandedState(next);
+    if (next) {
+      replaceHash(slug);
+    } else if (getHashSlug() === slug) {
+      replaceHash(null);
+    }
+  };
+
+  return { rowRef, expanded, setExpanded };
+}
+
+function replaceHash(slug: string | null) {
+  const base = window.location.pathname + window.location.search;
+  history.replaceState(history.state, '', slug ? `${base}#${encodeURIComponent(slug)}` : base);
+}
+
+let pendingScrollSlug: string | null = getHashSlug() || null;
