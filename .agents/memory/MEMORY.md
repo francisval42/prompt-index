@@ -5,3 +5,4 @@
 - [Design subagent crash recovery](design-subagent-crashes.md) — dead subagents usually finished their work; verify files/shapes before redoing, re-apply only shape extras.
 - [Prod boot vs DB provisioning](prod-boot-and-db.md) — prod DB exists only after a successful publish; listen before init or first publish crash-loops. Mirror fatals to stderr, pino buffers die with the process.
 - [Headless tester noise](headless-hover-testing.md) — hover: styles absent (Tailwind v4 @media hover gate) and dev CSP inline-style console errors are ambient; neither is a regression.
+- [Published site lags workspace](prod-spa-fallback.md) — live site serves the last user-published bundle; grep the served JS to confirm what's live before judging behavior; SPA rewrite is honored.
