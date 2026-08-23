@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { useLocation } from 'wouter';
+import { Link, useLocation } from 'wouter';
 import { marked } from 'marked';
 
 import brandSkillExampleRaw from '../content/brand-skill/example.md?raw';
@@ -504,13 +504,13 @@ const TAB_TITLES: Record<TabKey, string> = {
 };
 
 function App() {
-  const [location, navigate] = useLocation();
+  const [location] = useLocation();
   // Tolerate trailing slashes ("/connect/" === "/connect"); unknown paths fall back to Prompts.
   const normalizedPath = location.replace(/\/+$/, '') || '/';
   const tab: TabKey = PATH_TO_TAB.get(normalizedPath) ?? 'prompts';
-  const setTab = (next: TabKey) => {
-    // Skip no-op navigations so the active tab doesn't stack duplicate history entries.
-    if (normalizedPath !== TAB_PATHS[next]) navigate(TAB_PATHS[next]);
+  // Clicking the already-active tab is a no-op so it doesn't stack duplicate history entries.
+  const skipIfActive = (key: TabKey) => (e: React.MouseEvent) => {
+    if (tab === key) e.preventDefault();
   };
   const [filter, setFilter] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
@@ -576,43 +576,56 @@ function App() {
         <h1 className="font-display font-normal text-3xl sm:text-4xl leading-none uppercase tracking-[.015em]">INDEX</h1>
       </header>
       
+      {/*
+        Tabs are real anchors (wouter Link) so browser link affordances work:
+        cmd/ctrl+click and middle-click open in a new browser tab, right-click
+        offers "Copy Link Address". Plain left-click stays a client-side
+        navigation (wouter prevents the default and calls navigate()).
+        Cursor: anchors keep the native pointer cursor (buttons had Tailwind
+        preflight's default cursor) — deliberate, since these are now links.
+      */}
       <nav className="overflow-x-auto">
         <div className="px-4 sm:px-8 border-b border-border flex items-end h-12 gap-2 w-max min-w-full">
-        <button
-          type="button"
-          onClick={() => setTab('prompts')}
+        <Link
+          href={TAB_PATHS.prompts}
+          onClick={skipIfActive('prompts')}
+          aria-current={tab === 'prompts' ? 'page' : undefined}
           className={`h-full flex items-center px-2 -mb-[1px] border-b-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:-outline-offset-2 outline-none ${tab === 'prompts' ? 'border-accent text-foreground font-medium' : 'border-transparent text-muted hover:text-foreground'}`}
         >
           Prompts
-        </button>
-        <button
-          type="button"
-          onClick={() => setTab('brand')}
+        </Link>
+        <Link
+          href={TAB_PATHS.brand}
+          onClick={skipIfActive('brand')}
+          aria-current={tab === 'brand' ? 'page' : undefined}
           className={`h-full flex items-center px-2 -mb-[1px] border-b-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:-outline-offset-2 outline-none ${tab === 'brand' ? 'border-accent text-foreground font-medium' : 'border-transparent text-muted hover:text-foreground'}`}
         >
           Brand skill
-        </button>
-        <button
-          type="button"
-          onClick={() => setTab('launch')}
+        </Link>
+        <Link
+          href={TAB_PATHS.launch}
+          onClick={skipIfActive('launch')}
+          aria-current={tab === 'launch' ? 'page' : undefined}
           className={`h-full flex items-center px-2 -mb-[1px] border-b-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:-outline-offset-2 outline-none ${tab === 'launch' ? 'border-accent text-foreground font-medium' : 'border-transparent text-muted hover:text-foreground'}`}
         >
           Launch ready
-        </button>
-        <button
-          type="button"
-          onClick={() => setTab('capabilities')}
+        </Link>
+        <Link
+          href={TAB_PATHS.capabilities}
+          onClick={skipIfActive('capabilities')}
+          aria-current={tab === 'capabilities' ? 'page' : undefined}
           className={`h-full flex items-center px-2 -mb-[1px] border-b-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:-outline-offset-2 outline-none ${tab === 'capabilities' ? 'border-accent text-foreground font-medium' : 'border-transparent text-muted hover:text-foreground'}`}
         >
           Capabilities
-        </button>
-        <button
-          type="button"
-          onClick={() => setTab('connect')}
+        </Link>
+        <Link
+          href={TAB_PATHS.connect}
+          onClick={skipIfActive('connect')}
+          aria-current={tab === 'connect' ? 'page' : undefined}
           className={`h-full flex items-center px-2 -mb-[1px] border-b-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:-outline-offset-2 outline-none ${tab === 'connect' ? 'border-accent text-foreground font-medium' : 'border-transparent text-muted hover:text-foreground'}`}
         >
           Connect
-        </button>
+        </Link>
         </div>
       </nav>
 
