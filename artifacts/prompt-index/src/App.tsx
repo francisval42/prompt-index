@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { useLocation } from 'wouter';
 import { marked } from 'marked';
 
 import brandSkillExampleRaw from '../content/brand-skill/example.md?raw';
@@ -478,8 +479,30 @@ function ConnectPage() {
   );
 }
 
+type TabKey = 'prompts' | 'brand' | 'launch' | 'capabilities' | 'connect';
+
+// Each tab has a stable URL so it can be shared and deep-linked directly.
+const TAB_PATHS: Record<TabKey, string> = {
+  prompts: '/',
+  brand: '/brand',
+  launch: '/launch',
+  capabilities: '/capabilities',
+  connect: '/connect',
+};
+
+const PATH_TO_TAB = new Map<string, TabKey>(
+  (Object.entries(TAB_PATHS) as [TabKey, string][]).map(([key, tabPath]) => [tabPath, key]),
+);
+
 function App() {
-  const [tab, setTab] = useState<'prompts' | 'brand' | 'launch' | 'capabilities' | 'connect'>('prompts');
+  const [location, navigate] = useLocation();
+  // Tolerate trailing slashes ("/connect/" === "/connect"); unknown paths fall back to Prompts.
+  const normalizedPath = location.replace(/\/+$/, '') || '/';
+  const tab: TabKey = PATH_TO_TAB.get(normalizedPath) ?? 'prompts';
+  const setTab = (next: TabKey) => {
+    // Skip no-op navigations so the active tab doesn't stack duplicate history entries.
+    if (normalizedPath !== TAB_PATHS[next]) navigate(TAB_PATHS[next]);
+  };
   const [filter, setFilter] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 
