@@ -515,7 +515,7 @@ const PATH_TO_TAB = new Map<string, TabKey>(
   (Object.entries(TAB_PATHS) as [TabKey, string][]).map(([key, tabPath]) => [tabPath, key]),
 );
 
-// Human-readable tab names for the document title, matching the nav labels.
+const FILTER_PARAM = 'q';
 const TAB_TITLES: Record<TabKey, string> = {
   prompts: 'Prompts',
   brand: 'Brand skill',
@@ -549,16 +549,17 @@ function BrokenLinkRedirect() {
 
 function App() {
   const [location] = useLocation();
-  // Tolerate trailing slashes ("/connect/" === "/connect"); unknown paths
-  // redirect to the index (see the guard after the hooks below).
-  const normalizedPath = location.replace(/\/+$/, '') || '/';
+  // Unknown paths redirect to the index (see the guard after the hooks below).
+  const normalizedPath = normalizePath(location);
   const matchedTab = PATH_TO_TAB.get(normalizedPath);
   const tab: TabKey = matchedTab ?? 'prompts';
-  // Clicking the already-active tab is a no-op so it doesn't stack duplicate history entries.
+  // Clicking the already-active tab is a no-op so it doesn't stack duplicate
+  // history entries (and, on Prompts, doesn't wipe ?q= from the URL).
   const skipIfActive = (key: TabKey) => (e: React.MouseEvent) => {
     if (tab === key) e.preventDefault();
   };
-  const [filter, setFilter] = useState('');
+  // Seed the filter from ?q= so a shared or bookmarked link restores the same filtered view.
+  const [filter, setFilter] = useState(readFilterFromUrl);
   const inputRef = useRef<HTMLInputElement>(null);
   // True only right after BrokenLinkRedirect sent the visitor here; cleared
   // by the DISMISS button or by navigating to another tab.
@@ -602,6 +603,46 @@ function App() {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  // Mirror the filter into ?q= while on the Prompts tab so the current view can
+  // be copied straight from the address bar. replaceState (not pushState) keeps
+  // typing from flooding session history; the short debounce coalesces fast
+  // keystrokes below browser rate limits on history updates. Other tabs are
+  // untouched: tab links navigate to bare paths, and this effect skips them.
+  useEffect(() => {
+    if (tab !== 'prompts') return;
+    const timeout = window.setTimeout(() => {
+      const params = new URLSearchParams(window.location.search);
+      if ((params.get(FILTER_PARAM) ?? '') === filter) return;
+      if (filter) {
+        params.set(FILTER_PARAM, filter);
+      } else {
+        params.delete(FILTER_PARAM);
+      }
+      const query = params.toString();
+      // Preserve unrelated params and the row deep-link hash; only ?q= belongs
+      // to this feature.
+      window.history.replaceState(
+        window.history.state,
+        '',
+        `${window.location.pathname}${query ? `?${query}` : ''}${window.location.hash}`,
+      );
+    }, 150);
+    return () => window.clearTimeout(timeout);
+  }, [tab, filter]);
+
+  // Back/forward can land on a Prompts history entry whose URL carries a
+  // different ?q= than current state; adopt the URL's value so the visible
+  // list always matches the address bar. Non-Prompts entries are ignored so
+  // the filter still persists across ordinary tab switches.
+  useEffect(() => {
+    const handlePopState = () => {
+      if (PATH_TO_TAB.get(currentAppPath()) !== 'prompts') return;
+      setFilter(readFilterFromUrl());
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
   const filteredPrompts = useMemo(() => {
@@ -825,6 +866,8 @@ function replaceHash(slug: string | null) {
 
 let pendingScrollSlug: string | null = getHashSlug() || null;
 
+const ROUTER_BASE = import.meta.env.BASE_URL.replace(/\/+$/, '');
+
 function RowLinkButton({ slug }: { slug: string }) {
   const [copied, setCopied] = useState(false);
 
@@ -854,4 +897,17 @@ function RowLinkButton({ slug }: { slug: string }) {
       {copied ? 'COPIED' : 'LINK'}
     </button>
   );
+}
+
+function readFilterFromUrl(): string {
+  return new URLSearchParams(window.location.search).get(FILTER_PARAM) ?? '';
+}
+
+const normalizePath = (path: string) => path.replace(/\/+$/, '') || '/';
+
+function currentAppPath(): string {
+  const { pathname } = window.location;
+  const withoutBase =
+    ROUTER_BASE && pathname.startsWith(ROUTER_BASE) ? pathname.slice(ROUTER_BASE.length) : pathname;
+  return normalizePath(withoutBase);
 }
