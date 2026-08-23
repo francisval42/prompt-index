@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Link, Redirect, useLocation } from 'wouter';
+import React, { useState, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
+import { Link, useLocation } from 'wouter';
 import { marked } from 'marked';
 
 import brandSkillExampleRaw from '../content/brand-skill/example.md?raw';
@@ -515,6 +515,29 @@ const TAB_TITLES: Record<TabKey, string> = {
   connect: 'Connect',
 };
 
+// sessionStorage key set just before the unknown-path redirect so the index
+// can tell the visitor why they landed there. Consumed (removed) the first
+// time the notice renders, so it shows once per redirect: reloads and normal
+// visits to "/" stay clean. sessionStorage instead of wouter's history state
+// because state set via replaceState survives a reload and would re-show it.
+const BROKEN_LINK_FLAG = 'index:broken-link-redirect';
+
+// Drop-in for wouter's <Redirect to="/" replace />: identical navigation (a
+// pre-paint layout effect; `replace` keeps the dead URL out of history) plus
+// the session flag App consumes to show the one-time broken-link notice.
+function BrokenLinkRedirect() {
+  const [, navigate] = useLocation();
+  useLayoutEffect(() => {
+    try {
+      sessionStorage.setItem(BROKEN_LINK_FLAG, '1');
+    } catch {
+      // Storage blocked (private browsing, etc.): skip the notice, keep the redirect.
+    }
+    navigate('/', { replace: true });
+  }, [navigate]);
+  return null;
+}
+
 function App() {
   const [location] = useLocation();
   // Tolerate trailing slashes ("/connect/" === "/connect"); unknown paths
@@ -528,12 +551,33 @@ function App() {
   };
   const [filter, setFilter] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
+  // True only right after BrokenLinkRedirect sent the visitor here; cleared
+  // by the DISMISS button or by navigating to another tab.
+  const [showBrokenLinkNotice, setShowBrokenLinkNotice] = useState(false);
 
   // Set a distinct title per tab so history entries, bookmarks, and shared
   // links are distinguishable. Runs on load and on every tab switch.
   useEffect(() => {
     document.title = `Index — ${TAB_TITLES[tab]}`;
   }, [tab]);
+
+  // Surface the broken-link notice on the render after the redirect lands on
+  // "/", consuming the flag so it appears only once. Navigating to any other
+  // tab dismisses it.
+  useEffect(() => {
+    if (normalizedPath !== '/') {
+      setShowBrokenLinkNotice(false);
+      return;
+    }
+    let flaggedRedirect = false;
+    try {
+      flaggedRedirect = sessionStorage.getItem(BROKEN_LINK_FLAG) === '1';
+      if (flaggedRedirect) sessionStorage.removeItem(BROKEN_LINK_FLAG);
+    } catch {
+      // No storage access — the redirect stays silent, as it was before.
+    }
+    if (flaggedRedirect) setShowBrokenLinkNotice(true);
+  }, [normalizedPath]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -587,10 +631,12 @@ function App() {
   // Mistyped or outdated links (e.g. /brands, /launch-ready) land here.
   // Redirect to the index instead of silently rendering Prompts under the
   // wrong URL, which would get bookmarked and re-shared. `replace` keeps the
-  // dead URL out of history so Back doesn't bounce through it again.
+  // dead URL out of history so Back doesn't bounce through it again, and the
+  // redirect flags the session so the index can explain what happened (see
+  // BrokenLinkRedirect above).
   // (Kept after the hooks: both renders must call the same hooks in order.)
   if (!matchedTab) {
-    return <Redirect to="/" replace />;
+    return <BrokenLinkRedirect />;
   }
 
   return (
@@ -663,6 +709,21 @@ function App() {
           <ConnectPage />
         ) : (
           <>
+            {showBrokenLinkNotice && (
+              <div
+                role="status"
+                className="flex items-start justify-between gap-4 border border-border px-4 py-3 text-sm text-muted"
+              >
+                <span>That page doesn't exist, so we brought you to the index.</span>
+                <button
+                  type="button"
+                  onClick={() => setShowBrokenLinkNotice(false)}
+                  className="shrink-0 font-bold text-muted hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent outline-none"
+                >
+                  DISMISS
+                </button>
+              </div>
+            )}
             <div>
               <input 
                 ref={inputRef}
