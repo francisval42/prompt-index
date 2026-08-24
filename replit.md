@@ -39,7 +39,7 @@ A single-page personal index of AI prompts for francisvalente.com: find a prompt
 
 ## Product
 
-Five tabs with stable URLs (Prompts `/`, Brand skill `/brand`, Launch ready `/launch`, Capabilities `/capabilities`, Connect `/connect`): INDEX header, filter input on Prompts (`/` focuses, Esc clears, case-insensitive substring across id/title/category/type/platforms), categories in fixed order (Protocols, Discovery, Generation, Repairs, Review, Builds; empty ones vanish entirely), dense hairline rows that expand inline to rendered markdown, COPY buttons copying raw bodies exactly, DOWNLOAD on Connect saving each doc under its frontmatter file name. Mobile: 16px base text, 44px tap targets, horizontally scrollable nav.
+Four tabs with stable URLs (Prompts `/`, Brand skill `/brand`, Launch ready `/launch`, Connect `/connect`): INDEX header, filter input on Prompts (`/` focuses, Esc clears, case-insensitive substring across id/title/category/type/platforms), categories in fixed order (Protocols, Discovery, Generation, Repairs, Review, Builds; empty ones vanish entirely), dense hairline rows that expand inline to rendered markdown, COPY buttons copying raw bodies exactly, DOWNLOAD on Connect saving each doc under its frontmatter file name. Mobile: 16px base text, 44px tap targets, horizontally scrollable nav.
 
 `/pay` (unlisted, not in the nav): custom AUD amount (min A$1, max A$10,000) plus optional reference (≤200 chars) → embedded dark-themed Stripe Payment Element (billing country defaults to AU) → PAID / error-with-retry states. Same design language as the index; deliberately no products, subscriptions, auth, saved cards, or refunds.
 

@@ -7,7 +7,6 @@ import brandSkillExampleRaw from '../content/brand-skill/example.md?raw';
 // Load all markdown files
 const promptModules = import.meta.glob('../content/prompts/*.md', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
 const launchReadyModules = import.meta.glob('../content/launch-ready/*.md', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
-const capabilityModules = import.meta.glob('../content/capabilities/*.md', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
 const connectModules = import.meta.glob('../content/connect/*.md', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
 
 const CATEGORY_ORDER = [
@@ -64,11 +63,6 @@ const BRAND_STEPS = [
 const brandSkillExample = parsePrompt(brandSkillExampleRaw);
 
 const launchReadyDocs = Object.values(launchReadyModules)
-  .map(parsePrompt)
-  .filter(Boolean)
-  .sort((a: any, b: any) => Number(a.order) - Number(b.order));
-
-const capabilityDocs = Object.values(capabilityModules)
   .map(parsePrompt)
   .filter(Boolean)
   .sort((a: any, b: any) => Number(a.order) - Number(b.order));
@@ -335,80 +329,6 @@ function LaunchReadyPage() {
   );
 }
 
-function CapabilityRow({ doc }: { doc: any }) {
-  const slug = String(doc.order);
-  const { rowRef, expanded, setExpanded } = useRowDeepLink(slug);
-  const [copied, setCopied] = useState(false);
-
-  const handleCopy = (e: React.MouseEvent | React.KeyboardEvent) => {
-    e.stopPropagation();
-    if (copied) return;
-    copyText(doc.body, () => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1000);
-    });
-  };
-
-  const num = String(doc.order).padStart(2, '0');
-  const panelId = `capability-panel-${doc.order}`;
-
-  return (
-    <div ref={rowRef} id={slug} className="border-b border-border group scroll-mt-4">
-      <div
-        onClick={() => setExpanded(!expanded)}
-        className="flex flex-col sm:flex-row sm:items-center py-3 gap-2 sm:gap-4 hover:bg-[#111] active:bg-[#111] touch-manipulation cursor-pointer transition-none"
-      >
-        <div className="text-muted w-10 shrink-0 hidden sm:block">{num}</div>
-        <button
-          type="button"
-          aria-expanded={expanded}
-          aria-controls={panelId}
-          onClick={e => {
-            e.stopPropagation();
-            setExpanded(!expanded);
-          }}
-          className="text-foreground font-medium flex gap-2 sm:w-72 shrink-0 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:-outline-offset-2 outline-none"
-        >
-          <span className="sm:hidden text-muted">{num}</span>
-          {doc.title}
-        </button>
-        <div className="text-muted text-sm flex-1">{doc.summary}</div>
-        <RowLinkButton slug={slug} />
-        <button
-          type="button"
-          onClick={handleCopy}
-          className={`shrink-0 self-start sm:self-auto sm:w-20 text-left sm:text-right font-bold py-3 sm:-my-3 px-3 -mx-3 sm:px-0 sm:mx-0 touch-manipulation focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent outline-none ${copied ? 'text-accent' : 'text-muted hover:text-foreground active:text-foreground'}`}
-        >
-          {copied ? 'COPIED' : 'COPY'}
-        </button>
-      </div>
-
-      {expanded && (
-        <div id={panelId} className="py-8 bg-background border-t border-border cursor-auto">
-          <div
-            className="prose prose-invert [overflow-wrap:anywhere] prose-p:leading-relaxed prose-pre:overflow-x-auto prose-pre:bg-[#111] prose-pre:border prose-pre:border-border max-w-3xl mx-auto prose-hr:border-border prose-headings:font-bold prose-headings:text-foreground"
-            dangerouslySetInnerHTML={{ __html: marked.parse(doc.body) as string }}
-          />
-        </div>
-      )}
-    </div>
-  );
-}
-
-function CapabilitiesPage() {
-  return (
-    <div className="flex flex-col gap-10 pb-16">
-      <section className="flex flex-col">
-        <div className="border-t border-border flex flex-col">
-          {capabilityDocs.map((doc: any) => (
-            <CapabilityRow key={doc.order} doc={doc} />
-          ))}
-        </div>
-      </section>
-    </div>
-  );
-}
-
 function ConnectDocRow({ doc }: { doc: any }) {
   const slug = String(doc.order);
   const { rowRef, expanded, setExpanded } = useRowDeepLink(slug);
@@ -500,14 +420,13 @@ function ConnectPage() {
   );
 }
 
-type TabKey = 'prompts' | 'brand' | 'launch' | 'capabilities' | 'connect';
+type TabKey = 'prompts' | 'brand' | 'launch' | 'connect';
 
 // Each tab has a stable URL so it can be shared and deep-linked directly.
 const TAB_PATHS: Record<TabKey, string> = {
   prompts: '/',
   brand: '/brand',
   launch: '/launch',
-  capabilities: '/capabilities',
   connect: '/connect',
 };
 
@@ -520,7 +439,6 @@ const TAB_TITLES: Record<TabKey, string> = {
   prompts: 'Prompts',
   brand: 'Brand skill',
   launch: 'Launch ready',
-  capabilities: 'Capabilities',
   connect: 'Connect',
 };
 
@@ -730,14 +648,6 @@ function App() {
           Launch ready
         </Link>
         <Link
-          href={TAB_PATHS.capabilities}
-          onClick={skipIfActive('capabilities')}
-          aria-current={tab === 'capabilities' ? 'page' : undefined}
-          className={`h-full flex items-center px-2 -mb-[1px] border-b-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:-outline-offset-2 outline-none ${tab === 'capabilities' ? 'border-accent text-foreground font-medium' : 'border-transparent text-muted hover:text-foreground active:text-foreground'}`}
-        >
-          Capabilities
-        </Link>
-        <Link
           href={TAB_PATHS.connect}
           onClick={skipIfActive('connect')}
           aria-current={tab === 'connect' ? 'page' : undefined}
@@ -753,8 +663,6 @@ function App() {
           <BrandSkillPage />
         ) : tab === 'launch' ? (
           <LaunchReadyPage />
-        ) : tab === 'capabilities' ? (
-          <CapabilitiesPage />
         ) : tab === 'connect' ? (
           <ConnectPage />
         ) : (
