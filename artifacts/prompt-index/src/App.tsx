@@ -82,12 +82,12 @@ const LAUNCH_STEPS = [
 ];
 
 const CONNECT_STEPS = [
-  '1. List what Claude needs to reach. Email, calendar, files, CRM, one line per service.',
-  '2. Check the directory first. claude.ai: Settings > Connectors. Claude Code: /mcp. If the service is there, connect it, test it, stop.',
-  '3. No connector? Confirm the service has an API and your plan includes API access. No API, no build.',
-  '4. Set up API access with 1-API-ACCESS. Complete the checklist before any code exists.',
-  '5. Build the server with 2-BUILD-PROMPTS. Every write sits behind confirmed=true.',
-  '6. Register and test with 3-CONNECT-AND-TEST. Keep the troubleshooting card.',
+  '1. List what Claude needs to reach.',
+  '2. Check the connector directory, wire it, stop if covered.',
+  '3. No connector, confirm the service has an API.',
+  '4. Set up API access with 1-API-ACCESS.',
+  '5. Build the server with 2-BUILD-PROMPTS.',
+  '6. Register and test with 3-CONNECT-AND-TEST.',
 ];
 
 function copyText(text: string, done: () => void) {
