@@ -1,4 +1,5 @@
 import { runMigrations } from "stripe-replit-sync";
+import { ensureNewsletterSchema } from "@workspace/db";
 import app from "./app";
 import { logger } from "./lib/logger";
 import { getStripeSync } from "./lib/stripeClient";
@@ -102,6 +103,40 @@ async function initStripeWithRetry(): Promise<void> {
   }
 }
 
+/**
+ * Same first-publish story as Stripe: without DATABASE_URL the newsletter
+ * admin API answers 503 until a later boot has the database, so skipping
+ * here is safe and keeps the server up.
+ */
+async function initNewsletterSchemaWithRetry(): Promise<void> {
+  if (!process.env.DATABASE_URL) {
+    const msg =
+      "DATABASE_URL is not set; newsletter tables not ensured. " +
+      "The newsletter admin API is down until the production database exists.";
+    logger.error(msg);
+    console.error(`[startup] ${msg}`);
+    return;
+  }
+
+  for (let attempt = 1; attempt <= INIT_ATTEMPTS; attempt++) {
+    try {
+      await ensureNewsletterSchema();
+      logger.info("Newsletter schema ready");
+      return;
+    } catch (err) {
+      if (attempt === INIT_ATTEMPTS) {
+        logFatal(
+          `Newsletter schema init failed after ${INIT_ATTEMPTS} attempts; newsletter routes will fail until the next boot`,
+          err,
+        );
+        return;
+      }
+      logger.warn({ err, attempt }, "Newsletter schema init failed; retrying");
+      await new Promise((resolve) => setTimeout(resolve, 2000 * attempt));
+    }
+  }
+}
+
 const rawPort = process.env["PORT"];
 
 if (!rawPort) {
@@ -124,4 +159,5 @@ app.listen(port, (err) => {
 
   logger.info({ port }, "Server listening");
   void initStripeWithRetry();
+  void initNewsletterSchemaWithRetry();
 });

@@ -10,3 +10,8 @@ The production database does not exist until a successful publish provisions it.
 **How to apply:** listen() first so /api/healthz answers 200, run database/Stripe init in the background (retry transient failures, degrade loudly when DATABASE_URL is absent). Per-request Stripe calls (payment intents, publishable key) work without the database; only webhook sync needs it, and Stripe's delivery retries make that self-heal once a later instance boots with the database provisioned.
 
 Second lesson: pino logs through an async worker thread, so a fast crash loses every buffered line and deployment logs show only stray fragments of Node's code frame (a single caret from a megabyte-long bundled line). Mirror fatal errors to stderr with synchronous console.error, and keep uncaughtException/unhandledRejection handlers that do the same before exiting.
+
+## Lazy db imports and schema on fresh databases
+- Never require DATABASE_URL at import time in a shared db package: the first publish boots without a database, so a module-scope pool constructor or throw crashes the server before it listens. Make the pool lazy (created on first query) and gate db-backed routes with an explicit 503 middleware.
+- **Why:** app code importing the db package at module scope (routers, app.ts) executes it during boot, long before any request needs the database.
+- **How to apply:** app-owned tables also need creating in prod: drizzle-kit push never runs there, so run idempotent CREATE TABLE IF NOT EXISTS DDL at boot (after listen, with retries), kept in sync with the drizzle schema.

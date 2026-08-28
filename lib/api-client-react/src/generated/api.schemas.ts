@@ -35,3 +35,101 @@ export interface ApiErrorMessage {
   error: string;
 }
 
+export interface AdminCredentials {
+  /** @minLength 1 */
+  password: string;
+}
+
+export interface AdminSession {
+  authenticated: boolean;
+}
+
+export interface DnsRecord {
+  /**
+     * Resend's record grouping, e.g. SPF or DKIM
+     * @nullable
+     */
+  record?: string | null;
+  type: string;
+  name: string;
+  value: string;
+  /** @nullable */
+  ttl?: string | null;
+  /** @nullable */
+  priority?: number | null;
+  /** @nullable */
+  status?: string | null;
+}
+
+export interface SendingDomainStatus {
+  domain: string;
+  found: boolean;
+  verified: boolean;
+  /** Resend domain status, or not_found when the domain is missing from the account */
+  status: string;
+  records: DnsRecord[];
+}
+
+export type SubscriberStatus = typeof SubscriberStatus[keyof typeof SubscriberStatus];
+
+
+export const SubscriberStatus = {
+  active: 'active',
+  unsubscribed: 'unsubscribed',
+} as const;
+
+export interface Subscriber {
+  id: number;
+  email: string;
+  firstName: string;
+  status: SubscriberStatus;
+  dateAdded: string;
+}
+
+export interface SubscriberInput {
+  /** @maxLength 320 */
+  email: string;
+  /** @maxLength 200 */
+  firstName?: string;
+}
+
+export interface Issue {
+  id: number;
+  subject: string;
+  sentAt: string;
+  recipientCount: number;
+  failedCount: number;
+}
+
+export interface IssueDraft {
+  /**
+     * @minLength 1
+     * @maxLength 500
+     */
+  subject: string;
+  /** @minLength 1 */
+  body: string;
+}
+
+export interface IssueSendInput {
+  /**
+     * @minLength 1
+     * @maxLength 500
+     */
+  subject: string;
+  /** @minLength 1 */
+  body: string;
+  confirmDuplicate?: boolean;
+}
+
+export interface SendError {
+  email: string;
+  error: string;
+}
+
+export interface SendResult {
+  sent: number;
+  failed: number;
+  errors: SendError[];
+}
+

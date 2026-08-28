@@ -6,8 +6,20 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from './adminCredentials';
+export * from './adminSession';
 export * from './apiErrorMessage';
+export * from './dnsRecord';
 export * from './healthStatus';
+export * from './issue';
+export * from './issueDraft';
+export * from './issueSendInput';
 export * from './payConfig';
 export * from './payIntent';
 export * from './payIntentInput';
+export * from './sendError';
+export * from './sendingDomainStatus';
+export * from './sendResult';
+export * from './subscriber';
+export * from './subscriberInput';
+export * from './subscriberStatus';

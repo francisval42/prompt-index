@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, type ComponentType } from 'react';
 import { createRoot } from 'react-dom/client';
 import { Route, Router, Switch, useLocation } from 'wouter';
 
@@ -11,31 +11,39 @@ import './index.css';
 // index pages, which is most of the JS a visitor would otherwise download.
 // A failed chunk load is almost always a stale build cached after a publish,
 // so retry once with a hard reload before surfacing the error.
-const PayPage = lazy(async () => {
-  const RETRIED = 'pay-chunk-reloaded';
-  try {
-    const mod = await import('@/pages/pay');
+function lazyWithReload<T extends ComponentType>(
+  load: () => Promise<{ default: T }>,
+  retriedKey: string,
+) {
+  return lazy(async () => {
     try {
-      sessionStorage.removeItem(RETRIED);
-    } catch {
-      /* storage blocked: nothing to clean up */
+      const mod = await load();
+      try {
+        sessionStorage.removeItem(retriedKey);
+      } catch {
+        /* storage blocked: nothing to clean up */
+      }
+      return mod;
+    } catch (error) {
+      let alreadyRetried = true;
+      try {
+        alreadyRetried = sessionStorage.getItem(retriedKey) === '1';
+        if (!alreadyRetried) sessionStorage.setItem(retriedKey, '1');
+      } catch {
+        /* storage blocked: skip the reload and surface the error */
+      }
+      if (!alreadyRetried) {
+        window.location.reload();
+        return new Promise<never>(() => {});
+      }
+      throw error;
     }
-    return mod;
-  } catch (error) {
-    let alreadyRetried = true;
-    try {
-      alreadyRetried = sessionStorage.getItem(RETRIED) === '1';
-      if (!alreadyRetried) sessionStorage.setItem(RETRIED, '1');
-    } catch {
-      /* storage blocked: skip the reload and surface the error */
-    }
-    if (!alreadyRetried) {
-      window.location.reload();
-      return new Promise<never>(() => {});
-    }
-    throw error;
-  }
-});
+  });
+}
+
+const PayPage = lazyWithReload(() => import('@/pages/pay'), 'pay-chunk-reloaded');
+// Unlisted newsletter admin page; same stale-chunk reload treatment.
+const AdminPage = lazyWithReload(() => import('@/pages/admin'), 'admin-chunk-reloaded');
 
 // wouter expects the base without a trailing slash ("" when served at root).
 const routerBase = import.meta.env.BASE_URL.replace(/\/+$/, '');
@@ -50,6 +58,11 @@ function RoutedApp() {
         <Route path="/pay">
           <Suspense fallback={<div className="min-h-[100dvh] bg-background" />}>
             <PayPage />
+          </Suspense>
+        </Route>
+        <Route path="/admin">
+          <Suspense fallback={<div className="min-h-[100dvh] bg-background" />}>
+            <AdminPage />
           </Suspense>
         </Route>
         {/* Everything else renders the index, matching previous behavior. */}

@@ -12,6 +12,8 @@ tags:
     description: Health operations
   - name: payments
     description: Payment portal operations
+  - name: newsletter
+    description: Newsletter administration
 paths:
   /healthz:
     get:
@@ -70,6 +72,256 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ApiErrorMessage"
+  /newsletter/admin/session:
+    get:
+      operationId: getAdminSession
+      tags: [newsletter]
+      summary: Admin session status
+      description: Reports whether the caller holds a valid admin session cookie
+      responses:
+        "200":
+          description: Session status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminSession"
+    post:
+      operationId: adminLogin
+      tags: [newsletter]
+      summary: Admin login
+      description: Exchanges the admin password for a session cookie
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminCredentials"
+      responses:
+        "200":
+          description: Logged in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminSession"
+        "401":
+          description: Wrong password
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiErrorMessage"
+        "429":
+          description: Rate limited
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiErrorMessage"
+        "503":
+          description: Admin password not configured
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiErrorMessage"
+  /newsletter/admin/domain:
+    get:
+      operationId: getNewsletterDomainStatus
+      tags: [newsletter]
+      summary: Sending domain verification status
+      description: Asks Resend whether the sending domain is verified and returns the DNS records Resend wants
+      responses:
+        "200":
+          description: Domain status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SendingDomainStatus"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiErrorMessage"
+        "502":
+          description: Resend API error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiErrorMessage"
+  /newsletter/admin/subscribers:
+    get:
+      operationId: listSubscribers
+      tags: [newsletter]
+      summary: List subscribers
+      responses:
+        "200":
+          description: All subscribers, newest first
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Subscriber"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiErrorMessage"
+    post:
+      operationId: addSubscriber
+      tags: [newsletter]
+      summary: Add a subscriber
+      description: Adds a subscriber, or reactivates them if they previously unsubscribed
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SubscriberInput"
+      responses:
+        "201":
+          description: Subscriber added or reactivated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Subscriber"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiErrorMessage"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiErrorMessage"
+        "409":
+          description: Already an active subscriber
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiErrorMessage"
+  /newsletter/admin/subscribers/{id}:
+    delete:
+      operationId: removeSubscriber
+      tags: [newsletter]
+      summary: Remove a subscriber
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Removed
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiErrorMessage"
+        "404":
+          description: Subscriber not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiErrorMessage"
+  /newsletter/admin/issues:
+    get:
+      operationId: listIssues
+      tags: [newsletter]
+      summary: List sent issues
+      responses:
+        "200":
+          description: Sent issues, newest first
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Issue"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiErrorMessage"
+  /newsletter/admin/test-send:
+    post:
+      operationId: sendTestIssue
+      tags: [newsletter]
+      summary: Send a test issue to the owner only
+      description: Sends the draft to francis@vgfs.com.au and nobody else
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IssueDraft"
+      responses:
+        "200":
+          description: Test send outcome
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SendResult"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiErrorMessage"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiErrorMessage"
+        "502":
+          description: Resend API error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiErrorMessage"
+  /newsletter/admin/send:
+    post:
+      operationId: sendIssue
+      tags: [newsletter]
+      summary: Send an issue to all active subscribers
+      description: Sends individually to every active subscriber; refuses an identical resend unless confirmDuplicate is set
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IssueSendInput"
+      responses:
+        "200":
+          description: Send outcome, recorded as an issue
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SendResult"
+        "400":
+          description: Invalid input or no active subscribers
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiErrorMessage"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiErrorMessage"
+        "409":
+          description: Identical issue already sent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiErrorMessage"
 components:
   schemas:
     HealthStatus:
@@ -114,3 +366,168 @@ components:
           type: string
       required:
         - error
+    AdminCredentials:
+      type: object
+      properties:
+        password:
+          type: string
+          minLength: 1
+      required:
+        - password
+    AdminSession:
+      type: object
+      properties:
+        authenticated:
+          type: boolean
+      required:
+        - authenticated
+    DnsRecord:
+      type: object
+      properties:
+        record:
+          type: ["string", "null"]
+          description: Resend's record grouping, e.g. SPF or DKIM
+        type:
+          type: string
+        name:
+          type: string
+        value:
+          type: string
+        ttl:
+          type: ["string", "null"]
+        priority:
+          type: ["integer", "null"]
+        status:
+          type: ["string", "null"]
+      required:
+        - type
+        - name
+        - value
+    SendingDomainStatus:
+      type: object
+      properties:
+        domain:
+          type: string
+        found:
+          type: boolean
+        verified:
+          type: boolean
+        status:
+          type: string
+          description: Resend domain status, or not_found when the domain is missing from the account
+        records:
+          type: array
+          items:
+            $ref: "#/components/schemas/DnsRecord"
+      required:
+        - domain
+        - found
+        - verified
+        - status
+        - records
+    Subscriber:
+      type: object
+      properties:
+        id:
+          type: integer
+        email:
+          type: string
+        firstName:
+          type: string
+        status:
+          type: string
+          enum: [active, unsubscribed]
+        dateAdded:
+          type: string
+          format: date-time
+      required:
+        - id
+        - email
+        - firstName
+        - status
+        - dateAdded
+    SubscriberInput:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 320
+        firstName:
+          type: string
+          maxLength: 200
+      required:
+        - email
+    Issue:
+      type: object
+      properties:
+        id:
+          type: integer
+        subject:
+          type: string
+        sentAt:
+          type: string
+          format: date-time
+        recipientCount:
+          type: integer
+        failedCount:
+          type: integer
+      required:
+        - id
+        - subject
+        - sentAt
+        - recipientCount
+        - failedCount
+    IssueDraft:
+      type: object
+      properties:
+        subject:
+          type: string
+          minLength: 1
+          maxLength: 500
+        body:
+          type: string
+          minLength: 1
+      required:
+        - subject
+        - body
+    IssueSendInput:
+      type: object
+      properties:
+        subject:
+          type: string
+          minLength: 1
+          maxLength: 500
+        body:
+          type: string
+          minLength: 1
+        confirmDuplicate:
+          type: boolean
+      required:
+        - subject
+        - body
+    SendError:
+      type: object
+      properties:
+        email:
+          type: string
+        error:
+          type: string
+      required:
+        - email
+        - error
+    SendResult:
+      type: object
+      properties:
+        sent:
+          type: integer
+        failed:
+          type: integer
+        errors:
+          type: array
+          items:
+            $ref: "#/components/schemas/SendError"
+      required:
+        - sent
+        - failed
+        - errors

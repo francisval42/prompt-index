@@ -47,3 +47,158 @@ export const CreatePayIntentResponse = zod.object({
 })
 
 
+/**
+ * Reports whether the caller holds a valid admin session cookie
+ * @summary Admin session status
+ */
+export const GetAdminSessionResponse = zod.object({
+  "authenticated": zod.boolean()
+})
+
+
+/**
+ * Exchanges the admin password for a session cookie
+ * @summary Admin login
+ */
+
+
+
+export const AdminLoginBody = zod.object({
+  "password": zod.string().min(1)
+})
+
+export const AdminLoginResponse = zod.object({
+  "authenticated": zod.boolean()
+})
+
+
+/**
+ * Asks Resend whether the sending domain is verified and returns the DNS records Resend wants
+ * @summary Sending domain verification status
+ */
+export const GetNewsletterDomainStatusResponse = zod.object({
+  "domain": zod.string(),
+  "found": zod.boolean(),
+  "verified": zod.boolean(),
+  "status": zod.string().describe('Resend domain status, or not_found when the domain is missing from the account'),
+  "records": zod.array(zod.object({
+  "record": zod.string().nullish().describe('Resend\'s record grouping, e.g. SPF or DKIM'),
+  "type": zod.string(),
+  "name": zod.string(),
+  "value": zod.string(),
+  "ttl": zod.string().nullish(),
+  "priority": zod.number().int().nullish(),
+  "status": zod.string().nullish()
+}))
+})
+
+
+/**
+ * @summary List subscribers
+ */
+export const ListSubscribersResponseItem = zod.object({
+  "id": zod.number().int(),
+  "email": zod.string(),
+  "firstName": zod.string(),
+  "status": zod.enum(['active', 'unsubscribed']),
+  "dateAdded": zod.coerce.date()
+})
+export const ListSubscribersResponse = zod.array(ListSubscribersResponseItem)
+
+
+/**
+ * Adds a subscriber, or reactivates them if they previously unsubscribed
+ * @summary Add a subscriber
+ */
+export const addSubscriberBodyEmailMax = 320;
+
+export const addSubscriberBodyFirstNameMax = 200;
+
+
+
+export const AddSubscriberBody = zod.object({
+  "email": zod.string().email().max(addSubscriberBodyEmailMax),
+  "firstName": zod.string().max(addSubscriberBodyFirstNameMax).optional()
+})
+
+export const AddSubscriberResponse = zod.object({
+  "id": zod.number().int(),
+  "email": zod.string(),
+  "firstName": zod.string(),
+  "status": zod.enum(['active', 'unsubscribed']),
+  "dateAdded": zod.coerce.date()
+})
+
+
+/**
+ * @summary Remove a subscriber
+ */
+export const RemoveSubscriberParams = zod.object({
+  "id": zod.coerce.number().int()
+})
+
+export const RemoveSubscriberResponse = zod.void()
+
+
+/**
+ * @summary List sent issues
+ */
+export const ListIssuesResponseItem = zod.object({
+  "id": zod.number().int(),
+  "subject": zod.string(),
+  "sentAt": zod.coerce.date(),
+  "recipientCount": zod.number().int(),
+  "failedCount": zod.number().int()
+})
+export const ListIssuesResponse = zod.array(ListIssuesResponseItem)
+
+
+/**
+ * Sends the draft to francis@vgfs.com.au and nobody else
+ * @summary Send a test issue to the owner only
+ */
+export const sendTestIssueBodySubjectMax = 500;
+
+
+
+
+export const SendTestIssueBody = zod.object({
+  "subject": zod.string().min(1).max(sendTestIssueBodySubjectMax),
+  "body": zod.string().min(1)
+})
+
+export const SendTestIssueResponse = zod.object({
+  "sent": zod.number().int(),
+  "failed": zod.number().int(),
+  "errors": zod.array(zod.object({
+  "email": zod.string(),
+  "error": zod.string()
+}))
+})
+
+
+/**
+ * Sends individually to every active subscriber; refuses an identical resend unless confirmDuplicate is set
+ * @summary Send an issue to all active subscribers
+ */
+export const sendIssueBodySubjectMax = 500;
+
+
+
+
+export const SendIssueBody = zod.object({
+  "subject": zod.string().min(1).max(sendIssueBodySubjectMax),
+  "body": zod.string().min(1),
+  "confirmDuplicate": zod.boolean().optional()
+})
+
+export const SendIssueResponse = zod.object({
+  "sent": zod.number().int(),
+  "failed": zod.number().int(),
+  "errors": zod.array(zod.object({
+  "email": zod.string(),
+  "error": zod.string()
+}))
+})
+
+

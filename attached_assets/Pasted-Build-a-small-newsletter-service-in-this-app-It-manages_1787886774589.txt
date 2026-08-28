@@ -1,0 +1,49 @@
+Build a small newsletter service in this app. It manages a private
+subscriber list and sends a weekly email through Resend. Keep it
+minimal - this is a personal newsletter starting with a handful of
+readers.
+
+Sending:
+- Use the Resend API with the key already stored in this app's
+  secrets as RESEND_API_KEY. If it's stored under a different name,
+  ask me rather than guessing. Never hardcode keys or invent
+  placeholder values in code. If you need any other secret (admin
+  password, database URL, anything at all), stop and ask me to add
+  it to Secrets by name before continuing.
+- Send from news@navaro.com.au with the from name
+  "Francis Valente".
+- Add an admin action that checks with Resend whether the
+  navaro.com.au domain is verified for sending and shows the
+  status. If it isn't verified, list the exact DNS records Resend
+  wants so I can add them in Cloudflare.
+- Send to each subscriber individually - never CC or BCC the list.
+  Include a per-subscriber one-click unsubscribe link in the footer
+  and set the List-Unsubscribe header. Unsubscribing flips the
+  subscriber to unsubscribed immediately, no confirmation screen.
+
+Subscribers:
+- A simple table: email, first name, status (active or
+  unsubscribed), date added. Use the database this app already has,
+  or ask me before adding a new one.
+- No public sign-up page yet. Adding and removing subscribers
+  happens on the admin page only.
+
+Admin page:
+- One password-protected page. The password comes from a secret -
+  ask me to add ADMIN_PASSWORD. The page shows domain verification
+  status, the subscriber list with add and remove, and the issue
+  sender.
+- The issue sender: a subject field, a body field that accepts
+  markdown or simple HTML, a "send test to me" button that emails
+  only francis@vgfs.com.au, and a separate "send to all active
+  subscribers" button that shows the recipient count and asks are
+  you sure before sending.
+- Record every issue sent (subject, date, recipient count) and
+  refuse to send the same issue to the full list twice unless I
+  explicitly duplicate it.
+
+Rules:
+- Surface real error messages from Resend in the admin page, not
+  generic failures.
+- README documents the endpoints, the secrets used and how a
+  weekly send works.
