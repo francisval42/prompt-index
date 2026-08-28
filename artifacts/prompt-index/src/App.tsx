@@ -8,6 +8,10 @@ import brandSkillExampleRaw from '../content/brand-skill/example.md?raw';
 const promptModules = import.meta.glob('../content/prompts/*.md', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
 const launchReadyModules = import.meta.glob('../content/launch-ready/*.md', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
 const connectModules = import.meta.glob('../content/connect/*.md', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
+const explainerModules = import.meta.glob('../content/explainers/*.md', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
+// Images that explainer markdown references by relative path, served through
+// Vite so they exist in dev and in the fingerprinted production build.
+const explainerAssets = import.meta.glob('../content/explainers/*.{svg,png,jpg,jpeg,gif,webp}', { query: '?url', import: 'default', eager: true }) as Record<string, string>;
 
 const CATEGORY_ORDER = [
   "Protocols",
@@ -71,6 +75,62 @@ const connectDocs = Object.values(connectModules)
   .map(parsePrompt)
   .filter(Boolean)
   .sort((a: any, b: any) => Number(a.order) - Number(b.order));
+
+const explainerDocs = Object.values(explainerModules)
+  .map(parsePrompt)
+  .filter(Boolean)
+  .sort((a: any, b: any) => Number(a.order) - Number(b.order));
+
+// Row slug for hash deep links: the file name minus .md (e.g. skills.md -> #skills).
+const explainerSlug = (doc: any) => String(doc.file ?? '').replace(/\.md$/i, '') || String(doc.order);
+
+const explainerAssetByName: Record<string, string> = Object.fromEntries(
+  Object.entries(explainerAssets).map(([path, url]) => [path.split('/').pop() ?? path, url]),
+);
+
+// Markdown in content/explainers references images by bare relative path
+// (e.g. skills-diagram.svg). That path never exists at the served URL, so
+// rewrite each img src in the rendered HTML to its Vite asset URL.
+function resolveExplainerAssetUrls(html: string): string {
+  return html.replace(/src="([^"]+)"/g, (match, src) => {
+    let decoded = src;
+    try {
+      decoded = decodeURIComponent(src);
+    } catch {
+      // Malformed percent escape in a content-authored path: fall through
+      // with the raw value rather than crashing the whole tab.
+    }
+    const name = decoded.split('/').pop();
+    const mapped = name ? explainerAssetByName[name] : undefined;
+    return mapped ? `src="${mapped}"` : match;
+  });
+}
+
+// Split a markdown body into HTML chunks and fenced code blocks so each code
+// block can render as a React component with the site's stateful COPY button.
+// The code text is passed through verbatim: what renders is what copies.
+function splitMarkdownSegments(markdown: string): Array<{ kind: 'html'; html: string } | { kind: 'code'; code: string }> {
+  const tokens = marked.lexer(markdown);
+  const links = (tokens as any).links ?? {};
+  const segments: Array<{ kind: 'html'; html: string } | { kind: 'code'; code: string }> = [];
+  let chunk: any[] = [];
+  const flush = () => {
+    if (!chunk.length) return;
+    (chunk as any).links = links;
+    segments.push({ kind: 'html', html: marked.parser(chunk as any) as string });
+    chunk = [];
+  };
+  for (const token of tokens) {
+    if ((token as any).type === 'code') {
+      flush();
+      segments.push({ kind: 'code', code: (token as any).text });
+    } else {
+      chunk.push(token);
+    }
+  }
+  flush();
+  return segments;
+}
 
 const LAUNCH_STEPS = [
   '1. Copy the build rules into replit.md before the first prompt. Other tools: CLAUDE.md, .cursor/rules, or attach the file at chat start.',
@@ -420,7 +480,90 @@ function ConnectPage() {
   );
 }
 
-type TabKey = 'prompts' | 'brand' | 'launch' | 'connect';
+function ExplainerCodeBlock({ code }: { code: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    if (copied) return;
+    copyText(code, () => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1000);
+    });
+  };
+
+  return (
+    <div className="max-w-3xl mx-auto w-full flex flex-col gap-2">
+      <div className="flex justify-end">
+        <button
+          type="button"
+          onClick={handleCopy}
+          className={`shrink-0 font-bold py-3 sm:-my-3 px-3 -mx-3 sm:px-0 sm:mx-0 touch-manipulation focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent outline-none ${copied ? 'text-accent' : 'text-muted hover:text-foreground active:text-foreground'}`}
+        >
+          {copied ? 'COPIED' : 'COPY'}
+        </button>
+      </div>
+      <pre className="bg-[#111] border border-border overflow-x-auto p-4 text-sm leading-relaxed"><code>{code}</code></pre>
+    </div>
+  );
+}
+
+function ExplainerRow({ doc }: { doc: any }) {
+  const slug = explainerSlug(doc);
+  const { rowRef, expanded, setExpanded } = useRowDeepLink(slug);
+  const segments = useMemo(() => splitMarkdownSegments(doc.body), [doc.body]);
+
+  return (
+    <div ref={rowRef} id={slug} className="border-b border-border group scroll-mt-4">
+      <div
+        role="button"
+        tabIndex={0}
+        aria-expanded={expanded}
+        onClick={() => setExpanded(!expanded)}
+        onKeyDown={e => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            setExpanded(!expanded);
+          }
+        }}
+        className="flex items-center py-3 hover:bg-[#111] active:bg-[#111] touch-manipulation focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:-outline-offset-2 cursor-pointer transition-none outline-none"
+      >
+        <div className="text-foreground flex-1 font-medium">{doc.title}</div>
+      </div>
+
+      {expanded && (
+        <div className="py-8 bg-background border-t border-border cursor-auto flex flex-col gap-6">
+          {segments.map((seg, i) =>
+            seg.kind === 'code' ? (
+              <ExplainerCodeBlock key={i} code={seg.code} />
+            ) : (
+              <div
+                key={i}
+                className="prose prose-invert [overflow-wrap:anywhere] prose-p:leading-relaxed prose-img:w-full prose-pre:overflow-x-auto prose-pre:bg-[#111] prose-pre:border prose-pre:border-border max-w-3xl mx-auto prose-hr:border-border prose-headings:font-bold prose-headings:text-foreground"
+                dangerouslySetInnerHTML={{ __html: resolveExplainerAssetUrls(seg.html) }}
+              />
+            ),
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ExplainersPage() {
+  return (
+    <div className="flex flex-col gap-10 pb-16">
+      <section className="flex flex-col">
+        <div className="border-t border-border flex flex-col">
+          {explainerDocs.map((doc: any) => (
+            <ExplainerRow key={explainerSlug(doc)} doc={doc} />
+          ))}
+        </div>
+      </section>
+    </div>
+  );
+}
+
+type TabKey = 'prompts' | 'brand' | 'launch' | 'connect' | 'explainers';
 
 // Each tab has a stable URL so it can be shared and deep-linked directly.
 const TAB_PATHS: Record<TabKey, string> = {
@@ -428,6 +571,7 @@ const TAB_PATHS: Record<TabKey, string> = {
   brand: '/brand',
   launch: '/launch',
   connect: '/connect',
+  explainers: '/explainers',
 };
 
 const PATH_TO_TAB = new Map<string, TabKey>(
@@ -440,6 +584,7 @@ const TAB_TITLES: Record<TabKey, string> = {
   brand: 'Brand skill',
   launch: 'Launch ready',
   connect: 'Connect',
+  explainers: 'Explainers',
 };
 
 // sessionStorage key set just before the unknown-path redirect so the index
@@ -655,6 +800,14 @@ function App() {
         >
           Connect
         </Link>
+        <Link
+          href={TAB_PATHS.explainers}
+          onClick={skipIfActive('explainers')}
+          aria-current={tab === 'explainers' ? 'page' : undefined}
+          className={`h-full flex items-center px-2 -mb-[1px] border-b-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:-outline-offset-2 outline-none ${tab === 'explainers' ? 'border-accent text-foreground font-medium' : 'border-transparent text-muted hover:text-foreground active:text-foreground'}`}
+        >
+          Explainers
+        </Link>
         </div>
       </nav>
 
@@ -665,6 +818,8 @@ function App() {
           <LaunchReadyPage />
         ) : tab === 'connect' ? (
           <ConnectPage />
+        ) : tab === 'explainers' ? (
+          <ExplainersPage />
         ) : (
           <>
             {showBrokenLinkNotice && (

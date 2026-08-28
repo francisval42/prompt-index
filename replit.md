@@ -39,13 +39,13 @@ A single-page personal index of AI prompts for francisvalente.com: find a prompt
 
 ## Product
 
-Four tabs with stable URLs (Prompts `/`, Brand skill `/brand`, Launch ready `/launch`, Connect `/connect`): INDEX header, filter input on Prompts (`/` focuses, Esc clears, case-insensitive substring across id/title/category/type/platforms), categories in fixed order (Protocols, Discovery, Generation, Repairs, Review, Builds; empty ones vanish entirely), dense hairline rows that expand inline to rendered markdown, COPY buttons copying raw bodies exactly, DOWNLOAD on Connect saving each doc under its frontmatter file name. Mobile: 16px base text, 44px tap targets, horizontally scrollable nav.
+Five tabs with stable URLs (Prompts `/`, Brand skill `/brand`, Launch ready `/launch`, Connect `/connect`, Explainers `/explainers`): INDEX header, filter input on Prompts (`/` focuses, Esc clears, case-insensitive substring across id/title/category/type/platforms), categories in fixed order (Protocols, Discovery, Generation, Repairs, Review, Builds; empty ones vanish entirely), dense hairline rows that expand inline to rendered markdown, COPY buttons copying raw bodies exactly, DOWNLOAD on Connect saving each doc under its frontmatter file name. Explainers rows show titles only and expand to a long-form readable topic: images referenced by relative path in content/explainers markdown are rewritten to Vite asset URLs (full column width, no border), and each fenced code block renders as a React component with the site's stateful COPY button (renders exactly what it copies). Mobile: 16px base text, 44px tap targets, horizontally scrollable nav.
 
 `/pay` (unlisted, not in the nav): custom AUD amount (min A$1, max A$10,000) plus optional reference (≤200 chars) → embedded dark-themed Stripe Payment Element (billing country defaults to AU) → PAID / error-with-retry states. Same design language as the index; deliberately no products, subscriptions, auth, saved cards, or refunds.
 
 ## User preferences
 
-- The attached build brief is the spec and wins over defaults: clinical greyscale look, accent #ff5c00 only on active-tab underline / hover / focus / COPIED / PAID and payment errors, no icons, images, shadows, cards, gradients, toasts, footer, or descriptive copy anywhere
+- The attached build brief is the spec and wins over defaults: clinical greyscale look, accent #ff5c00 only on active-tab underline / hover / focus / COPIED / PAID and payment errors, no icons, shadows, cards, gradients, toasts, footer, or descriptive copy anywhere. One user-granted exception to the old no-images rule: explainer topic bodies (content/explainers) may embed diagrams, rendered inline at column width with no border
 - No new dependencies beyond React, Vite, @fontsource/jetbrains-mono, one markdown parser, and the Stripe libraries required by `/pay`
 
 ## Gotchas
