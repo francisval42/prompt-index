@@ -54,4 +54,6 @@ No keys are hardcoded. If a secret is missing the API answers with an explicit e
 5. SEND TO N ACTIVE: shows the recipient count and asks for confirmation. Each active subscriber gets an individual email with a personal one-click unsubscribe link in the footer and `List-Unsubscribe` / `List-Unsubscribe-Post` headers.
 6. The issue is recorded (subject, date, recipient count, failures). Sending a byte-identical issue to the full list again is refused unless explicitly confirmed as a duplicate (SEND ANYWAY).
 
+Every send (test and real) renders the typed subject and body into the wrapper at `artifacts/api-server/src/lib/newsletter-template.html`. The template's header, styles and footer are used verbatim; the rows between its `<!-- OPENER -->` and `<!-- FOOTER -->` comments are replaced with the typed content, and its `{{unsubscribe_url}}` placeholder is swapped for each recipient's personal link at send time. Keep those two markers and the placeholder intact when editing the template.
+
 Unsubscribing flips the subscriber to unsubscribed immediately with no confirmation screen. Note: some corporate mail scanners follow links inside emails, which can trigger an unsubscribe; accepted tradeoff for a small personal list.

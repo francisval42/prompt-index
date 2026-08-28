@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Francis Valente — Issue 001 (dark)</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #16161a; display: flex; align-items: center; justify-content: center; min-height: 100vh; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
+    #__bundler_loading { position: fixed; bottom: 20px; right: 20px; font: 13px/1.4 -apple-system, BlinkMacSystemFont, sans-serif; color: #666; background: #fff; padding: 8px 14px; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.12); z-index: 10000; }
+    #__bundler_thumbnail { position: fixed; inset: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: #16161a; z-index: 9999; }
+    #__bundler_thumbnail svg { width: 100%; height: 100%; object-fit: contain; }
+    #__bundler_placeholder { color: #999; font-size: 14px; }
+  </style>
+  <noscript>
+    <style>#__bundler_loading { display: none; }</style>
+    <div style="position:fixed;bottom:12px;left:12px;font:13px/1.4 -apple-system,BlinkMacSystemFont,sans-serif;color:#999;background:rgba(255,255,255,0.9);padding:6px 12px;border-radius:6px;box-shadow:0 1px 4px rgba(0,0,0,0.08);z-index:10000;">
+      This page requires JavaScript to display.
+    </div>
+  </noscript>
+</head>
+<body>
+  <div id="__bundler_thumbnail">
+  <svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+    <rect width="1200" height="800" fill="#16161a"></rect>
+    <rect x="240" y="120" width="720" height="560" fill="#212127" stroke="#34343c" stroke-width="4"></rect>
+    <rect x="240" y="120" width="720" height="120" fill="#f0ece4"></rect>
+    <text x="290" y="200" font-family="Consolas, Menlo, monospace" font-size="54" font-weight="700" fill="#1c1c20">FV</text>
+    <rect x="290" y="300" width="620" height="6" fill="#ff5c00"></rect>
+    <rect x="290" y="340" width="420" height="14" fill="#4a4a52"></rect>
+    <rect x="290" y="380" width="560" height="14" fill="#4a4a52"></rect>
+    <rect x="290" y="420" width="500" height="14" fill="#4a4a52"></rect>
+    <rect x="290" y="490" width="620" height="6" fill="#ff5c00"></rect>
+    <rect x="290" y="530" width="620" height="110" fill="#2b2521" stroke="#ff5c00" stroke-width="4"></rect>
+  </svg>
+</div>
+  <div id="__bundler_loading">Unpacking...</div>
+
+  <script>
+    
+document.addEventListener('DOMContentLoaded', async function() {
+  const loading = document.getElementById('__bundler_loading');
+  function setStatus(msg) { if (loading) loading.textContent = msg; }
+
+  const FONT_MIME = /^(font[/]|application[/](x-)?font-|application[/]vnd\.ms-fontobject)/i;
+  const MIME_TOKEN = /^[\w.+-]+[/][\w.+-]+$/;
+  function toBase64(bytes) {
+    let bin = '';
+    for (let i = 0; i < bytes.length; i += 0x8000) {
+      bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+    }
+    return btoa(bin);
+  }
+
+  // Error sink persists across replaceWith since it's on window, not the DOM.
+  window.addEventListener('error', function(e) {
+    // Failed resource loads (CSP-blocked links, scripts, images) fire plain
+    // events at the element — warn only; real JS errors carry message/error.
+    if (!e.message && !e.error && e.target && e.target !== window) {
+      console.warn('[bundle] resource failed to load:',
+        e.target.tagName, String(e.target.src || e.target.href || ''));
+      return;
+    }
+    var p = document.body || document.documentElement;
+    var d = document.getElementById('__bundler_err') || p.appendChild(document.createElement('div'));
+    d.id = '__bundler_err';
+    d.style.cssText = 'position:fixed;bottom:12px;left:12px;right:12px;font:12px/1.4 ui-monospace,monospace;background:#2a1215;color:#ff8a80;padding:10px 14px;border-radius:8px;border:1px solid #5c2b2e;z-index:99999;white-space:pre-wrap;max-height:40vh;overflow:auto';
+    d.textContent = (d.textContent ? d.textContent + String.fromCharCode(10) : '') +
+      '[bundle] ' + (e.message || e.type) +
+      (e.filename ? ' (' + e.filename.slice(0, 60) + ':' + e.lineno + ')' : '');
+  }, true);
+
+  try {
+    const manifestEl = document.querySelector('script[type="__bundler/manifest"]');
+    const templateEl = document.querySelector('script[type="__bundler/template"]');
+    if (!manifestEl || !templateEl) {
+      setStatus('Error: missing bundle data');
+      console.error('[bundler] Missing script tags — manifestEl:', !!manifestEl, 'templateEl:', !!templateEl);
+      return;
+    }
+
+    const manifest = JSON.parse(manifestEl.textContent);
+    let template = JSON.parse(templateEl.textContent);
+
+    // Nested page bundles (iframe targets). Each ships ONCE, in the ROOT
+    // document's manifest; frame srcs carry an about:blank#<uuid> marker
+    // instead of a substitutable uuid. Every document mints the blobs for
+    // its OWN frames — from local text at the root, or text obtained from
+    // its DIRECT parent over the relay protocol below — so each frame
+    // navigation stays same-origin with its initiator and a deduped page
+    // loads at any depth on any host, including a file:// download's
+    // opaque origins (where a blob minted by one document cannot be
+    // navigated to by another).
+    const pageOrderEl = document.querySelector('script[type="__bundler/page_order"]');
+    const pageOrder = pageOrderEl ? JSON.parse(pageOrderEl.textContent) : [];
+    const pageSet = new Set(pageOrder);
+    const pageTexts = {};
+
+    // ── Nested-page text protocol (parent-chain relay) ──
+    // Page bundles ship once, in the ROOT document's manifest. Every
+    // document mints the blobs for its OWN frames, obtaining page text
+    // through a strict parent-chain relay: a document only ever SENDS to
+    // its direct parent (which, for every document the publisher's own
+    // runtime minted, is another publisher document) and only ACCEPTS
+    // text from that direct parent; requests from below are honored only
+    // for the document's own child frames, and the ROOT never sends
+    // upward at all. That last rule is load-bearing: the artifact host's
+    // frame-ancestors allows claude.ai (and friends) to frame an
+    // artifact, so window.top can be a FOREIGN document — a top-addressed
+    // protocol would hand page uuids to that ancestor and accept forged
+    // "page text" from it, minting attacker HTML as an artifact-origin
+    // blob document. The chain never touches the ancestor: requests stop
+    // at the root, replies are origin-addressed per hop (never '*' when
+    // an origin exists), and both directions are origin-gated (on https
+    // a foreign sender's origin can never equal this document's; in
+    // opaque contexts — file:// — everything serializes as 'null', where
+    // an embedded EXTERNAL frame still fails the gate by carrying its
+    // own real origin, and a sandboxed child of such a frame is excluded
+    // by the own-child-frames check plus uuid unguessability). Shape is
+    // deny-by-default: one request form, one reply form, no error
+    // replies.
+    // window.origin is the SERIALIZED SECURITY origin ('null' in opaque
+    // contexts such as a sandboxed preview iframe) — location.origin is
+    // computed from the URL and stays 'https://…' even when the document
+    // is sandboxed, which would misgate every opaque chain.
+    const OWN_TARGET = /^https?:[/][/]/.test(window.origin || '')
+      ? window.origin
+      : '*';
+    function trustedOrigin(e) {
+      if (e.origin === window.origin) return true; // https chains; opaque==opaque
+      // file:// trees: Chrome serializes the file document's origin as
+      // 'file://' while the blob: documents it mints serialize as 'null',
+      // so the two legitimate shapes can never string-match — accept the
+      // pair in both directions. https origins never serialize as either,
+      // and sender identity (own child frame / direct parent) is checked
+      // separately.
+      return (
+        (e.origin === 'null' &&
+          (window.origin === 'file://' ||
+            window.location.protocol === 'file:')) ||
+        (/^file:/.test(e.origin) && window.origin === 'null')
+      );
+    }
+    // Non-empty only in the root document (nested bundles ship an empty
+    // island), so it doubles as the root marker: the root answers from
+    // local text and treats a miss as authoritative — never relaying to
+    // its (possibly foreign) parent.
+    const isPageRoot = pageOrder.length > 0;
+    const blobUrls = {};
+    const resourceBlobs = {};
+    const UUID_SHAPE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+    const pendingFrames = {}; // uuid -> [{el, frag}] awaiting text for own frames
+    const pendingRelays = {}; // uuid -> [childWindow] awaiting text to pass down
+    function mountPage(el, frag, text) {
+      const pageBlob = new Blob([text], { type: 'text/html' });
+      const u = URL.createObjectURL(pageBlob);
+      resourceBlobs[u] = pageBlob;
+      el.src = u + frag;
+    }
+    function deliverPage(uuid, text) {
+      const frames = pendingFrames[uuid];
+      delete pendingFrames[uuid];
+      if (frames) for (const f of frames) mountPage(f.el, f.frag, text);
+      const relays = pendingRelays[uuid];
+      delete pendingRelays[uuid];
+      if (relays) {
+        for (const cw of relays) {
+          try { cw.postMessage({ __bundler_page: uuid, __bundler_text: text }, OWN_TARGET); } catch (err) { /* gone */ }
+        }
+      }
+    }
+    function ownFrameWindows() {
+      const out = [];
+      for (const f of Array.from(document.querySelectorAll('iframe'))) {
+        try { if (f.contentWindow) out.push(f.contentWindow); } catch (err) { /* detached */ }
+      }
+      return out;
+    }
+    window.addEventListener('message', function (e) {
+      const d = e.data;
+      if (!d || typeof d !== 'object' || !e.source) return;
+      // Origin gate first; the structural checks below (own-child-frames
+      // for requests, direct-parent + solicited-uuid for replies, the
+      // root's never-relay rule) are what hold in fully opaque chains
+      // where origin strings can't discriminate — a sandboxed root's
+      // FOREIGN wrapper still fails all three even though both serialize
+      // as real-vs-'null' rather than matching.
+      if (!trustedOrigin(e)) return;
+      if (typeof d.__bundler_need === 'string' && UUID_SHAPE.test(d.__bundler_need)) {
+        // Requests are honored only for this document's own child frames.
+        if (ownFrameWindows().indexOf(e.source) < 0) return;
+        const uuid = d.__bundler_need;
+        const text = pageTexts[uuid];
+        if (typeof text === 'string') {
+          try { e.source.postMessage({ __bundler_page: uuid, __bundler_text: text }, OWN_TARGET); } catch (err) { /* gone */ }
+          return;
+        }
+        if (isPageRoot || window.parent === window) return; // authoritative miss
+        const waiting = pendingRelays[uuid];
+        if (waiting) {
+          if (waiting.indexOf(e.source) < 0) waiting.push(e.source);
+          return;
+        }
+        // Never-answered uuids would otherwise accumulate forever under a
+        // request spray; past the cap (far above any real page count) new
+        // relays are dropped rather than remembered.
+        if (Object.keys(pendingRelays).length >= 128) return;
+        pendingRelays[uuid] = [e.source];
+        window.parent.postMessage({ __bundler_need: uuid }, OWN_TARGET);
+      } else if (
+        typeof d.__bundler_page === 'string' &&
+        UUID_SHAPE.test(d.__bundler_page) &&
+        typeof d.__bundler_text === 'string'
+      ) {
+        // The shape test is load-bearing beyond tidiness: the solicited
+        // check below uses the in operator, which matches prototype keys
+        // ('__proto__', 'constructor') — an unshaped key would reach
+        // deliverPage and throw, painting the error banner.
+        // Text is accepted only from the direct parent — the document
+        // that minted this one.
+        if (e.source !== window.parent || window.parent === window) return;
+        if (!(d.__bundler_page in pendingFrames) && !(d.__bundler_page in pendingRelays)) return;
+        deliverPage(d.__bundler_page, d.__bundler_text);
+      }
+    });
+
+    const uuids = Object.keys(manifest);
+    setStatus('Unpacking ' + uuids.length + ' assets...');
+
+    await Promise.all(uuids.map(async (uuid) => {
+      const entry = manifest[uuid];
+      try {
+        const binaryStr = atob(entry.data);
+        const bytes = new Uint8Array(binaryStr.length);
+        for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i);
+
+        let finalBytes = bytes;
+        if (entry.compressed) {
+          if (typeof DecompressionStream !== 'undefined') {
+            const ds = new DecompressionStream('gzip');
+            const writer = ds.writable.getWriter();
+            const reader = ds.readable.getReader();
+            writer.write(bytes);
+            writer.close();
+            const chunks = [];
+            let totalLen = 0;
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) break;
+              chunks.push(value);
+              totalLen += value.length;
+            }
+            finalBytes = new Uint8Array(totalLen);
+            let offset = 0;
+            for (const chunk of chunks) { finalBytes.set(chunk, offset); offset += chunk.length; }
+          } else {
+            console.warn('DecompressionStream not available, asset ' + uuid + ' may not render');
+          }
+        }
+
+        if (pageSet.has(uuid)) {
+          pageTexts[uuid] = new TextDecoder().decode(finalBytes);
+          return;
+        }
+        if (FONT_MIME.test(entry.mime) && MIME_TOKEN.test(entry.mime)) {
+          // Strict artifact hosts allow font-src data: but not blob:.
+          blobUrls[uuid] = 'data:' + entry.mime + ';base64,' +
+            (entry.compressed ? toBase64(finalBytes) : entry.data);
+        } else {
+          const blob = new Blob([finalBytes], { type: entry.mime });
+          blobUrls[uuid] = URL.createObjectURL(blob);
+          resourceBlobs[blobUrls[uuid]] = blob;
+        }
+      } catch (err) {
+        console.error('Failed to decode asset ' + uuid + ':', err);
+        const blob = new Blob([], { type: entry.mime });
+        blobUrls[uuid] = URL.createObjectURL(blob);
+        resourceBlobs[blobUrls[uuid]] = blob;
+      }
+    }));
+
+    const extResEl = document.querySelector('script[type="__bundler/ext_resources"]');
+    const extResources = extResEl ? JSON.parse(extResEl.textContent) : [];
+    const resourceMap = {};
+    for (const entry of extResources) {
+      if (blobUrls[entry.uuid]) resourceMap[entry.id] = blobUrls[entry.uuid];
+    }
+
+    // Artifact-host CSP (connect-src 'self') refuses fetch() of blob: URLs —
+    // consumers read these Blobs directly. Survives the swap like the error sink.
+    window.__resourceBlobs = resourceBlobs;
+
+    setStatus('Rendering...');
+    // Page uuids have no blob here — they ride inside about:blank#<uuid>
+    // frame markers the pass below resolves after the swap.
+    for (const uuid of uuids) {
+      if (pageSet.has(uuid)) continue;
+      template = template.split(uuid).join(blobUrls[uuid]);
+    }
+
+    // Strip integrity + crossorigin — blob URLs from a file:// document inherit
+    // a null origin, so crossorigin forces a CORS fetch that SRI then rejects.
+    // The manifest bytes are ours; SRI protects against CDN compromise, not this.
+    template = template.replace(/\s+integrity="[^"]*"/gi, '').replace(/\s+crossorigin="[^"]*"/gi, '');
+
+    const resourceScript = '<script>window.__resources = ' +
+      JSON.stringify(resourceMap).replace(/<\//g, '<\\/') +
+      ';</' + 'script>';
+    // Inject after <head> so the DOCTYPE stays first; prepending the script
+    // would push the parser into quirks mode. DOMParser always emits a <head>
+    // (synthesizing one if the source HTML omitted it) but may carry
+    // attributes through, so match the full opening tag. slice() rather than
+    // replace() keeps us clear of $-pattern substitution in resourceScript.
+    const headOpen = template.match(/<head[^>]*>/i);
+    if (headOpen) {
+      const i = headOpen.index + headOpen[0].length;
+      template = template.slice(0, i) + resourceScript + template.slice(i);
+    }
+
+    // Parse the template and swap the root element. Scripts inserted via
+    // DOMParser/replaceWith are inert per spec — re-create each with
+    // createElement so they execute, awaiting onload for src scripts to
+    // preserve ordering (React before ReactDOM before Babel before text/babel).
+    const doc = new DOMParser().parseFromString(template, 'text/html');
+    document.documentElement.replaceWith(doc.documentElement);
+
+    // Resolve page-frame markers: mint this document's own blob for each
+    // framed page — from local text when this is the root, otherwise by
+    // asking the direct parent over the relay protocol above. An
+    // unanswered request leaves the frame on about:blank, the same
+    // degraded state as a refused embed.
+    {
+      const MARKER = /^about:blank#([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(#.*)?$/;
+      const needed = [];
+      for (const el of Array.from(document.querySelectorAll('iframe'))) {
+        const m = MARKER.exec(el.getAttribute('src') || '');
+        if (!m) continue;
+        const text = pageTexts[m[1]];
+        if (typeof text === 'string') {
+          mountPage(el, m[2] || '', text);
+        } else if (window.parent !== window && !isPageRoot) {
+          const had = pendingFrames[m[1]];
+          (pendingFrames[m[1]] = had || []).push({ el: el, frag: m[2] || '' });
+          if (!had) needed.push(m[1]);
+        }
+      }
+      for (const uuid of needed) {
+        window.parent.postMessage({ __bundler_need: uuid }, OWN_TARGET);
+      }
+    }
+
+    const dead = Array.from(document.scripts);
+    for (const old of dead) {
+      const s = document.createElement('script');
+      for (const a of old.attributes) s.setAttribute(a.name, a.value);
+      s.textContent = old.textContent;
+      // text/babel scripts with a src: read and inline. transformScriptTags
+      // does XHR against the src, but blob:null/ from a file:// origin is
+      // silently dropped. Inlining makes it a plain inline babel script,
+      // which transformScriptTags handles unconditionally.
+      if ((s.type === 'text/babel' || s.type === 'text/jsx') && s.src) {
+        const pre = resourceBlobs[s.src.split('#')[0]];
+        s.textContent = pre ? await pre.text() : await (await fetch(s.src)).text();
+        s.removeAttribute('src');
+      }
+      const p = s.src ? new Promise(function(r) { s.onload = s.onerror = r; }) : null;
+      old.replaceWith(s);
+      if (p) await p;
+    }
+    // Babel standalone auto-transforms type=text/babel on DOMContentLoaded,
+    // which fired before we swapped the document. Trigger manually if present.
+    if (window.Babel && typeof window.Babel.transformScriptTags === 'function') {
+      window.Babel.transformScriptTags();
+    }
+  } catch (err) {
+    setStatus('Error unpacking: ' + err.message);
+    console.error('Bundle unpack error:', err);
+  }
+});
+
+  </script>
+
+  <script type="__bundler/manifest">
+{}
+  </script>
+
+  <script type="__bundler/ext_resources">
+[]
+  </script>
+
+  <script type="__bundler/page_order">
+[]
+  </script>
+
+  <script type="__bundler/template">
+"<!DOCTYPE html>\n<html lang=\"en\"><head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<meta name=\"color-scheme\" content=\"light dark\">\n<meta name=\"supported-color-schemes\" content=\"light dark\">\n<title>Francis Valente — Issue 001 (dark)<\u002Ftitle>\n<!--[if mso]>\n<style type=\"text/css\">\n  body, table, td, p, a { font-family: Arial, Helvetica, sans-serif !important; }\n  .mono, .mono p { font-family: Consolas, 'Courier New', monospace !important; }\n<\u002Fstyle>\n<![endif]-->\n<style type=\"text/css\">\n  @media only screen and (max-width: 620px) {\n    .wrap { width: 100% !important; }\n    .pad { padding-left: 24px !important; padding-right: 24px !important; }\n    .masthead { font-size: 20px !important; }\n  }\n<\u002Fstyle>\n<\u002Fhead>\n\n<body style=\"margin:0; padding:0; background-color:#16161a; -webkit-text-size-adjust:100%; -ms-text-size-adjust:100%;\">\n\n<span style=\"display:none !important; visibility:hidden; opacity:0; color:transparent; height:0; width:0; overflow:hidden; mso-hide:all;\">Four things worth knowing this week, what I've been building, and one small thing to try.<\u002Fspan>\n\n<table role=\"presentation\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\" width=\"100%\" style=\"background-color:#16161a;\">\n  <tbody><tr>\n    <td align=\"center\" style=\"padding:32px 12px 44px 12px;\">\n\n      <table role=\"presentation\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\" width=\"600\" class=\"wrap\" style=\"width:600px; max-width:600px; background-color:#212127; border:1px solid #34343c;\">\n\n        <!-- HEADER STRIP -->\n        <tbody><tr>\n          <td class=\"pad mono\" width=\"600\" style=\"background-color:#f0ece4; padding:34px 40px 30px 40px; font-family:Consolas, Menlo, 'Courier New', monospace;\">\n            <p class=\"masthead\" style=\"margin:0; font-family:Consolas, Menlo, 'Courier New', monospace; font-size:23px; line-height:30px; mso-line-height-rule:exactly; letter-spacing:0.02em; color:#1c1c20; font-weight:700;\">Francis Valente<\u002Fp>\n            <p style=\"margin:10px 0 0 0; font-family:Consolas, Menlo, 'Courier New', monospace; font-size:13px; line-height:20px; mso-line-height-rule:exactly; letter-spacing:0.06em; color:#6d685f;\">Issue 001 · 5 September 2026<\u002Fp>\n          <\u002Ftd>\n        <\u002Ftr>\n\n        <!-- OPENER -->\n        <tr>\n          <td class=\"pad\" width=\"600\" style=\"padding:36px 40px 0 40px; font-family:-apple-system, 'Segoe UI', Arial, Helvetica, sans-serif; font-size:16px; line-height:27px; mso-line-height-rule:exactly; color:#e6e1d8;\">\n            <p style=\"margin:0;\">Quiet week here, which suited me. Everything below is something I read twice rather than skimmed once — four items, a note on what I've been building, and one small thing you can try in about ten minutes. If any of it is useful, hit reply and tell me which bit.<\u002Fp>\n          <\u002Ftd>\n        <\u002Ftr>\n\n        <!-- ===== SECTION: Worth knowing ===== -->\n        <tr>\n          <td class=\"pad\" width=\"600\" style=\"padding:34px 40px 0 40px;\">\n            <table role=\"presentation\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\" width=\"100%\" style=\"width:100%;\">\n              <tbody><tr><td height=\"1\" style=\"height:1px; background-color:#ff5c00; font-size:0; line-height:1px;\">&nbsp;<\u002Ftd><\u002Ftr>\n            <\u002Ftbody><\u002Ftable>\n            <p style=\"margin:16px 0 0 0; font-family:Consolas, Menlo, 'Courier New', monospace; font-size:13px; line-height:20px; mso-line-height-rule:exactly; letter-spacing:0.08em; color:#a49e93;\">Worth knowing<\u002Fp>\n          <\u002Ftd>\n        <\u002Ftr>\n\n        <!-- ITEM — duplicate this single <tr> block to add another item -->\n        <tr>\n          <td class=\"pad\" width=\"600\" style=\"padding:24px 40px 0 40px; font-family:-apple-system, 'Segoe UI', Arial, Helvetica, sans-serif; font-size:16px; line-height:26px; mso-line-height-rule:exactly; color:#e6e1d8;\">\n            <p style=\"margin:0 0 6px 0; font-size:16px; line-height:24px; mso-line-height-rule:exactly; font-weight:700; color:#faf7f1;\">Long context is quietly changing how people file things<\u002Fp>\n            <p style=\"margin:0;\">The interesting shift isn't summarising, it's that you can stop organising documents before you use them. I dropped a year of unsorted notes into one prompt and got back an index I actually kept. Retrieval plumbing starts to look optional for small personal corpora. <a href=\"https://example.com/long-context\" style=\"color:#ff7a33; text-decoration:underline;\">Read the write-up<\u002Fa><\u002Fp>\n          <\u002Ftd>\n        <\u002Ftr>\n\n        <tr>\n          <td class=\"pad\" width=\"600\" style=\"padding:24px 40px 0 40px; font-family:-apple-system, 'Segoe UI', Arial, Helvetica, sans-serif; font-size:16px; line-height:26px; mso-line-height-rule:exactly; color:#e6e1d8;\">\n            <p style=\"margin:0 0 6px 0; font-size:16px; line-height:24px; mso-line-height-rule:exactly; font-weight:700; color:#faf7f1;\">Small models are now good enough to run on the desk<\u002Fp>\n            <p style=\"margin:0;\">A 4B model handles classification and extraction well enough that I've moved two internal jobs off an API entirely. Latency was the real win; cost was never my bottleneck. Benchmark it on your own data before believing anyone's chart. <a href=\"https://example.com/small-models\" style=\"color:#ff7a33; text-decoration:underline;\">Benchmarks and caveats<\u002Fa><\u002Fp>\n          <\u002Ftd>\n        <\u002Ftr>\n\n        <tr>\n          <td class=\"pad\" width=\"600\" style=\"padding:24px 40px 0 40px; font-family:-apple-system, 'Segoe UI', Arial, Helvetica, sans-serif; font-size:16px; line-height:26px; mso-line-height-rule:exactly; color:#e6e1d8;\">\n            <p style=\"margin:0 0 6px 0; font-size:16px; line-height:24px; mso-line-height-rule:exactly; font-weight:700; color:#faf7f1;\">Evals are turning into the actual product work<\u002Fp>\n            <p style=\"margin:0;\">Every team I spoke to this month said the same thing in different words: the prompt took a day, the test set took a month. The teams shipping confidently are the ones who wrote down what \"good\" means before they started. Unglamorous and completely decisive. <a href=\"https://example.com/evals\" style=\"color:#ff7a33; text-decoration:underline;\">A practical starting template<\u002Fa><\u002Fp>\n          <\u002Ftd>\n        <\u002Ftr>\n\n        <tr>\n          <td class=\"pad\" width=\"600\" style=\"padding:24px 40px 0 40px; font-family:-apple-system, 'Segoe UI', Arial, Helvetica, sans-serif; font-size:16px; line-height:26px; mso-line-height-rule:exactly; color:#e6e1d8;\">\n            <p style=\"margin:0 0 6px 0; font-size:16px; line-height:24px; mso-line-height-rule:exactly; font-weight:700; color:#faf7f1;\">Voice interfaces got usable while nobody was watching<\u002Fp>\n            <p style=\"margin:0;\">Round-trip latency under half a second changes the feel completely — it stops being dictation and starts being conversation. I've been using it for first drafts on the drive home. Still bad at anything requiring precise numbers. <a href=\"https://example.com/voice\" style=\"color:#ff7a33; text-decoration:underline;\">Short demo and notes<\u002Fa><\u002Fp>\n          <\u002Ftd>\n        <\u002Ftr>\n\n        <!-- ===== SECTION: What I've been building ===== -->\n        <tr>\n          <td class=\"pad\" width=\"600\" style=\"padding:36px 40px 0 40px;\">\n            <table role=\"presentation\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\" width=\"100%\" style=\"width:100%;\">\n              <tbody><tr><td height=\"1\" style=\"height:1px; background-color:#ff5c00; font-size:0; line-height:1px;\">&nbsp;<\u002Ftd><\u002Ftr>\n            <\u002Ftbody><\u002Ftable>\n            <p style=\"margin:16px 0 0 0; font-family:Consolas, Menlo, 'Courier New', monospace; font-size:13px; line-height:20px; mso-line-height-rule:exactly; letter-spacing:0.08em; color:#a49e93;\">What I've been building<\u002Fp>\n          <\u002Ftd>\n        <\u002Ftr>\n\n        <tr>\n          <td class=\"pad\" width=\"600\" style=\"padding:22px 40px 0 40px; font-family:-apple-system, 'Segoe UI', Arial, Helvetica, sans-serif; font-size:16px; line-height:27px; mso-line-height-rule:exactly; color:#e6e1d8;\">\n            <p style=\"margin:0 0 16px 0;\">Most of my week went into the small app that sends this newsletter. It's deliberately unimpressive: a folder of markdown, a template, and a send button. I wanted the writing to be the only hard part, and it took two rebuilds to get there because I kept adding features nobody asked for, including me.<\u002Fp>\n            <p style=\"margin:0;\">The other thread was a triage assistant for my inbox — not automated replies, just ranking and a one-line reason for each. It's been running a fortnight and the useful discovery is that I disagree with it about once a day, which is roughly the rate I'd disagree with a competent assistant. That feels like the right bar.<\u002Fp>\n          <\u002Ftd>\n        <\u002Ftr>\n\n        <!-- ===== SECTION: One thing to try ===== -->\n        <tr>\n          <td class=\"pad\" width=\"600\" style=\"padding:36px 40px 0 40px;\">\n            <table role=\"presentation\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\" width=\"100%\" style=\"width:100%;\">\n              <tbody><tr><td height=\"1\" style=\"height:1px; background-color:#ff5c00; font-size:0; line-height:1px;\">&nbsp;<\u002Ftd><\u002Ftr>\n            <\u002Ftbody><\u002Ftable>\n            <p style=\"margin:16px 0 0 0; font-family:Consolas, Menlo, 'Courier New', monospace; font-size:13px; line-height:20px; mso-line-height-rule:exactly; letter-spacing:0.08em; color:#a49e93;\">One thing to try<\u002Fp>\n          <\u002Ftd>\n        <\u002Ftr>\n\n        <tr>\n          <td class=\"pad\" width=\"600\" style=\"padding:20px 40px 0 40px;\">\n            <table role=\"presentation\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\" width=\"100%\" style=\"width:100%; background-color:#2b2521; border:1px solid #ff5c00;\">\n              <tbody><tr>\n                <td style=\"padding:22px 24px 22px 24px; font-family:-apple-system, 'Segoe UI', Arial, Helvetica, sans-serif; font-size:16px; line-height:27px; mso-line-height-rule:exactly; color:#e6e1d8;\">\n                  <p style=\"margin:0;\">Take the last thing you wrote for work and ask a model to argue against it in three bullet points, then rewrite only the weakest one. Ten minutes, and it's a better use of the tool than asking it to write for you. I've started doing it before I send anything that matters. <a href=\"https://example.com/one-thing\" style=\"color:#ff7a33; text-decoration:underline;\">The prompt I use<\u002Fa><\u002Fp>\n                <\u002Ftd>\n              <\u002Ftr>\n            <\u002Ftbody><\u002Ftable>\n          <\u002Ftd>\n        <\u002Ftr>\n\n        <!-- FOOTER -->\n        <tr>\n          <td class=\"pad\" width=\"600\" style=\"padding:36px 40px 38px 40px;\">\n            <table role=\"presentation\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\" width=\"100%\" style=\"width:100%;\">\n              <tbody><tr><td height=\"1\" style=\"height:1px; background-color:#3a3a42; font-size:0; line-height:1px;\">&nbsp;<\u002Ftd><\u002Ftr>\n            <\u002Ftbody><\u002Ftable>\n            <p style=\"margin:18px 0 0 0; font-family:-apple-system, 'Segoe UI', Arial, Helvetica, sans-serif; font-size:13px; line-height:21px; mso-line-height-rule:exactly; color:#a49e93;\">You're getting this because I know you. Reply anytime — it lands in my real inbox.<\u002Fp>\n            <p style=\"margin:10px 0 0 0; font-family:-apple-system, 'Segoe UI', Arial, Helvetica, sans-serif; font-size:13px; line-height:21px; mso-line-height-rule:exactly; color:#6d685f;\"><a href=\"{{unsubscribe_url}}\" style=\"color:#a49e93; text-decoration:underline;\">Unsubscribe<\u002Fa><\u002Fp>\n            <p style=\"margin:14px 0 0 0; font-family:Consolas, Menlo, 'Courier New', monospace; font-size:12px; line-height:19px; mso-line-height-rule:exactly; letter-spacing:0.06em; color:#8f897f;\">Francis Valente · Melbourne<\u002Fp>\n          <\u002Ftd>\n        <\u002Ftr>\n\n      <\u002Ftbody><\u002Ftable>\n\n    <\u002Ftd>\n  <\u002Ftr>\n<\u002Ftbody><\u002Ftable>\n\n\n\n<\u002Fbody><\u002Fhtml>"
+  </script>
+</body>
+</html>

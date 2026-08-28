@@ -7,3 +7,4 @@
 - [Headless tester noise](headless-hover-testing.md) — hover: styles absent (Tailwind v4 @media hover gate) and dev CSP inline-style console errors are ambient; neither is a regression.
 - [Published site lags workspace](prod-spa-fallback.md) — live site serves the last user-published bundle; grep the served JS to confirm what's live before judging behavior; SPA rewrite is honored.
 - [GitHub push auth](github-push.md) — git pushes auth via replit-git-askpass (account-level GitHub link), not the connector; connector is API-only, never yields a raw token, settings empty is normal.
+- [Bundler-wrapped HTML uploads](bundler-wrapped-uploads.md) — attached .html exports can be self-extracting shells; real page is JSON inside the __bundler/template script tag.

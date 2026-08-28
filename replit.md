@@ -27,7 +27,7 @@ A single-page personal index of AI prompts for francisvalente.com: find a prompt
 - `artifacts/prompt-index/content/prompts/*.md` — one markdown file per prompt, parsed at build time via `import.meta.glob` with `?raw`
 - `artifacts/api-server/src/routes/pay.ts` — GET `/api/pay/config`, POST `/api/pay/intent` (validation + per-IP rate limit)
 - `artifacts/api-server/src/routes/newsletter.ts` — all `/api/newsletter` routes: admin session, Resend domain status, subscribers, issues, test send, full send, public unsubscribe
-- `artifacts/api-server/src/lib/resend.ts`, `lib/adminSession.ts`, `lib/newsletterEmail.ts` — Resend fetch wrapper, HMAC session cookie helpers, email HTML shell and content hash
+- `artifacts/api-server/src/lib/resend.ts`, `lib/adminSession.ts`, `lib/newsletterEmail.ts` — Resend fetch wrapper, HMAC session cookie helpers, email rendering (typed content into `newsletter-template.html`) and content hash
 - `artifacts/prompt-index/src/pages/admin.tsx` — the newsletter admin page (wouter route `/admin` in `src/main.tsx`)
 - `README.md` (repo root) — newsletter endpoints, secrets and the weekly send runbook
 - `artifacts/api-server/src/lib/stripeClient.ts` — Stripe credentials from the Replit connector (uncached so token rotation works)
@@ -72,6 +72,7 @@ Five tabs with stable URLs (Prompts `/`, Brand skill `/brand`, Launch ready `/la
 - Unsubscribe links are built from the request host at send time, so dev sends carry dev links; GET on the unsubscribe URL flips the subscriber immediately (mail scanners that prefetch links can trigger it, an accepted tradeoff for this list)
 - `@workspace/db` connects lazily on first query, never at import time; the first publish boots without a database, so an import-time DATABASE_URL requirement would crash the server before it listens
 - Newsletter tables are created at api-server boot by idempotent DDL (`ensureNewsletterSchema` in `lib/db`); keep that DDL in sync with `lib/db/src/schema/newsletter.ts` whenever the schema changes
+- Every newsletter email renders into the user-supplied wrapper `artifacts/api-server/src/lib/newsletter-template.html`; its `<!-- OPENER -->` / `<!-- FOOTER -->` markers and `{{unsubscribe_url}}` placeholder are load-bearing (`buildIssueEmail` throws if the markers go missing), and `.html` imports rely on the esbuild text loader in `build.mjs`
 - Full sends reserve the issue row (advisory lock on the content hash) before the first email goes out, then update or delete it afterwards; do not reorder that flow or concurrent identical sends can double-deliver
 
 ## Brand

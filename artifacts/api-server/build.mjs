@@ -21,6 +21,8 @@ async function buildAll() {
     format: "esm",
     outdir: distDir,
     outExtension: { ".js": ".mjs" },
+    // The newsletter email template ships inside the bundle as a string.
+    loader: { ".html": "text" },
     logLevel: "info",
     // Some packages may not be bundleable, so we externalize them, we can add more here as needed.
     // Some of the packages below may not be imported or installed, but we're adding them in case they are in the future.

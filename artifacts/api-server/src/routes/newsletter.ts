@@ -343,7 +343,7 @@ router.post(
     // The test footer carries a non-resolving token so the link is visible
     // but cannot unsubscribe anyone.
     const unsubscribeUrl = unsubscribeUrlFor(req, "test");
-    const email = buildIssueEmail(body, unsubscribeUrl);
+    const email = buildIssueEmail(subject, body, unsubscribeUrl);
 
     try {
       await sendEmail({
@@ -439,7 +439,7 @@ router.post(
     for (const [i, sub] of active.entries()) {
       if (i > 0) await sleep(SEND_GAP_MS);
       const unsubscribeUrl = unsubscribeUrlFor(req, sub.unsubscribeToken);
-      const email = buildIssueEmail(body, unsubscribeUrl);
+      const email = buildIssueEmail(subject, body, unsubscribeUrl);
       try {
         await sendEmail({
           from: NEWSLETTER_FROM,
