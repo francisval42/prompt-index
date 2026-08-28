@@ -631,7 +631,7 @@ function App() {
   // Set a distinct title per tab so history entries, bookmarks, and shared
   // links are distinguishable. Runs on load and on every tab switch.
   useEffect(() => {
-    document.title = `Index — ${TAB_TITLES[tab]}`;
+    document.title = 'Index';
   }, [tab]);
 
   // Surface the broken-link notice on the render after the redirect lands on
