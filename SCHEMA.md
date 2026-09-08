@@ -36,4 +36,4 @@ url: /path-to-a-real-published-issue
 
 Each row uses the issue as its ref, kind `Issue`, tag `Email`, and an OPEN anchor to `url` in the same tab. HTTP(S) URLs and site-relative paths are supported. Digest rows never expand or copy. No issue is added until its destination exists.
 
-Sections render in the order Prompts, Packs, Notes, Digest, with rows sorted by ref within each. Empty and fully filtered sections do not render. This document is never rendered or linked from the site.
+The default view (Recent) is one flat feed of every section, newest `added` first, same-day entries in ref order. A switch row above the feed narrows it to one section (Prompts, Packs, Notes, Digest); with Prompts selected a second row offers the six categories, empty ones hidden. The selection is carried in the URL as `s` and `c` alongside the text filter `q`; Escape clears all three. This document is never rendered or linked from the site.

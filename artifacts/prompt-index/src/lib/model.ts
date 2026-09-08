@@ -5,6 +5,7 @@ export type ManifestItem = {
   section: 'Prompts' | 'Packs' | 'Notes' | 'Digest';
   ref: string;
   kind: string;
+  category?: string;
   title: string;
   tags: string;
   added: string;
@@ -27,6 +28,7 @@ const prompts: ManifestItem[] = Object.entries(promptModules)
       section: 'Prompts' as const,
       ref: parsed.id || '',
       kind: parsed.type || 'Prompt',
+      category: parsed.category || '',
       title: parsed.title || '',
       tags: Array.isArray(parsed.platforms) ? parsed.platforms.join(', ') : (parsed.platforms || ''),
       added: parsed.added || parsed.updated || '',
@@ -162,6 +164,10 @@ const digest: ManifestItem[] = Object.entries(digestModules)
     };
   })
   .filter(Boolean) as ManifestItem[];
+
+export const SECTIONS = ['Prompts', 'Packs', 'Notes', 'Digest'] as const;
+export type Section = (typeof SECTIONS)[number];
+export const PROMPT_CATEGORIES = ['Protocols', 'Discovery', 'Generation', 'Repairs', 'Review', 'Builds'] as const;
 
 export const allItems: ManifestItem[] = [
   ...prompts.sort((a, b) => a.ref.localeCompare(b.ref)),
