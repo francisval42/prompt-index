@@ -2,6 +2,7 @@
 order: 1
 file: 1-BUILD-RULES.md
 title: Rules the AI builds under
+added: 2026-08-22
 updated: 2026-08-22
 ---
 # BUILD-RULES.md

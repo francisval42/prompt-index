@@ -245,7 +245,7 @@ export default function App() {
                         }
                       }}
                       onClick={handleRowClick}
-                      className={`manifest-row grid grid-cols-[52px_84px_minmax(0,2fr)_minmax(0,1fr)_84px_64px] max-[1000px]:grid-cols-[52px_84px_minmax(0,1fr)_84px_64px] max-[760px]:grid-cols-[44px_minmax(0,1fr)_auto] items-baseline py-[11px] pr-0 gap-4 cursor-pointer select-none border-l-2 ml-[-2px] pl-[14px] outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:-outline-offset-2 ${isCursor ? 'bg-[var(--color-cursor)] border-l-[var(--color-accent)]' : 'bg-transparent border-l-transparent'}`}
+                      className={`manifest-row grid grid-cols-[52px_84px_minmax(0,2fr)_minmax(0,1fr)_84px_64px] max-[1000px]:grid-cols-[52px_84px_minmax(0,1fr)_84px_64px] max-[760px]:grid-cols-[44px_minmax(0,1fr)_auto_auto] items-baseline py-[11px] pr-0 gap-4 cursor-pointer select-none border-l-2 ml-[-2px] pl-[14px] outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:-outline-offset-2 ${isCursor ? 'bg-[var(--color-cursor)] border-l-[var(--color-accent)]' : 'bg-transparent border-l-transparent'}`}
                       onMouseEnter={() => setCursor(visibleItems.indexOf(item))}
                     >
                       <div className="text-[var(--color-muted)] text-[12px]">{item.ref}</div>
@@ -254,7 +254,7 @@ export default function App() {
                         {item.title}
                       </div>
                       <div className="text-[var(--color-muted)] text-[12px] flex flex-wrap gap-x-3 gap-y-1 [overflow-wrap:anywhere] max-[1000px]:hidden">{item.tags.split(', ').map(tag => <span key={tag}>{tag}</span>)}</div>
-                      <div className="text-[var(--color-muted)] text-[11px] uppercase tracking-[0.06em] text-right max-[760px]:hidden">{formatManifestDate(item.updated)}</div>
+                      <div className="text-[var(--color-muted)] text-[11px] uppercase tracking-[0.06em] text-right whitespace-nowrap">{formatManifestDate(item.added)}</div>
                       
                       <div className="flex justify-end text-[12px] tracking-[0.06em]">
                         {item.action === 'OPEN' ? (
@@ -283,6 +283,9 @@ export default function App() {
                     {isExpanded && item.action !== 'OPEN' && (
                       <div id={`body-${item.id}`} className="border-t border-[var(--color-border)] pt-[32px] pb-[36px] pr-[14px] pl-[166px] max-[760px]:pl-0">
                         <div className="max-w-[72ch] min-w-0">
+                          {item.updated && item.updated !== item.added && (
+                            <div className="mb-6 text-[11px] uppercase tracking-[0.06em] text-[var(--color-muted)]">Updated {formatManifestDate(item.updated)}</div>
+                          )}
                           <div className="manifest-prose">
                             {splitMarkdownSegments(item.body).map((seg, idx) => {
                               if (seg.kind === 'html') {

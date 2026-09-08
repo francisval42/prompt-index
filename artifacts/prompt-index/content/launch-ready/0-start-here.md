@@ -2,6 +2,7 @@
 order: 0
 file: 0-START-HERE.md
 title: The five step process
+added: 2026-08-22
 updated: 2026-08-22
 ---
 # Launch Ready

@@ -2,6 +2,7 @@
 order: 3
 file: 3-PRE-LAUNCH-AUDIT.md
 title: The audit before launch
+added: 2026-08-22
 updated: 2026-08-22
 ---
 # PRE-LAUNCH-AUDIT.md

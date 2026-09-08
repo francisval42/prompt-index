@@ -7,6 +7,7 @@ export type ManifestItem = {
   kind: string;
   title: string;
   tags: string;
+  added: string;
   updated: string;
   action: 'COPY' | 'OPEN';
   body: string;
@@ -28,6 +29,7 @@ const prompts: ManifestItem[] = Object.entries(promptModules)
       kind: parsed.type || 'Prompt',
       title: parsed.title || '',
       tags: Array.isArray(parsed.platforms) ? parsed.platforms.join(', ') : (parsed.platforms || ''),
+      added: parsed.added || parsed.updated || '',
       updated: parsed.updated || '',
       action: 'COPY' as const,
       body: parsed.body,
@@ -49,6 +51,7 @@ const launchReady: ManifestItem[] = Object.entries(launchReadyModules)
       kind: 'Launch ready',
       title: parsed.title || '',
       tags: parsed.file || filename,
+      added: parsed.added || parsed.updated || '',
       updated: parsed.updated || '',
       action: 'COPY' as const,
       body: parsed.body,
@@ -69,6 +72,7 @@ const connect: ManifestItem[] = Object.entries(connectModules)
       kind: 'Connect',
       title: parsed.title || '',
       tags: parsed.file || filename,
+      added: parsed.added || parsed.updated || '',
       updated: parsed.updated || '',
       action: 'COPY' as const,
       body: parsed.body,
@@ -93,6 +97,7 @@ const explainers: ManifestItem[] = Object.entries(explainerModules)
       kind: parsed.kind || 'Explainer',
       title: parsed.title || '',
       tags: parsed.file || filename,
+      added: parsed.added || parsed.updated || '',
       updated: parsed.updated || '',
       action: 'COPY' as const,
       body: parsed.body,
@@ -122,6 +127,7 @@ const brandSkillItem: ManifestItem = {
   title: 'Make a brand skill',
   tags: brandSkill?.name || 'francis-valente-brand',
   // Supplied Manifest reference metadata; the skill file itself has no date.
+  added: '2026-08-22',
   updated: '2026-08-26',
   action: 'COPY',
   body: brandSkillBody,
@@ -148,6 +154,7 @@ const digest: ManifestItem[] = Object.entries(digestModules)
       kind: 'Issue',
       title: parsed.title || '',
       tags: 'Email',
+      added: parsed.added || parsed.updated || '',
       updated: parsed.updated || '',
       action: 'OPEN' as const,
       body: '',

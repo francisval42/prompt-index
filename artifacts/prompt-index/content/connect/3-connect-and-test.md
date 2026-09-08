@@ -2,6 +2,7 @@
 order: 3
 file: 3-CONNECT-AND-TEST.md
 title: Register, test, troubleshoot
+added: 2026-08-22
 updated: 2026-08-23
 ---
 

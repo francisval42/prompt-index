@@ -2,6 +2,7 @@
 order: 2
 file: 2-PROMPTS.md
 title: Kickoff and checkpoint prompts
+added: 2026-08-22
 updated: 2026-08-22
 ---
 # PROMPTS.md

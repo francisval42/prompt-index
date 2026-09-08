@@ -4,6 +4,7 @@ title: Break anything into its decisions and interview me through them
 category: Discovery
 type: Prompt
 platforms: [Claude, ChatGPT, Replit Agent]
+added: 2026-08-22
 updated: 2026-08-22
 ---
 

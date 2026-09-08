@@ -2,6 +2,7 @@
 order: 2
 file: 2-BUILD-PROMPTS.md
 title: The two build prompts
+added: 2026-08-22
 updated: 2026-08-23
 ---
 
