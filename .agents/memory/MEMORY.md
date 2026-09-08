@@ -1,10 +1,9 @@
-# Memory index
-
 - [Stripe connector + sync quirks](stripe-connector.md) — connector settings keys are `secret`/`publishable`; stripe-replit-sync must stay esbuild-external or migrations silently no-op.
 - [Orval zod catalog pin](orval-zod.md) — `"zod": "catalog:"` breaks orval version detection (emits zod v4 syntax); keep the version-3 override in orval.config.ts.
 - [Design subagent crash recovery](design-subagent-crashes.md) — dead subagents usually finished their work; verify files/shapes before redoing, re-apply only shape extras.
 - [Prod boot vs DB provisioning](prod-boot-and-db.md) — prod DB exists only after a successful publish; listen before init or first publish crash-loops. Mirror fatals to stderr, pino buffers die with the process.
-- [Headless tester noise](headless-hover-testing.md) — hover: styles absent (Tailwind v4 @media hover gate) and dev CSP inline-style console errors are ambient; neither is a regression.
+- [Headless verification limits](headless-hover-testing.md) — hover/CSP noise, transient feedback timing and remote clipboard limits.
 - [Published site lags workspace](prod-spa-fallback.md) — live site serves the last user-published bundle; grep the served JS to confirm what's live before judging behavior; SPA rewrite is honored.
 - [GitHub push auth](github-push.md) — git pushes auth via replit-git-askpass (account-level GitHub link), not the connector; connector is API-only, never yields a raw token, settings empty is normal.
 - [Bundler-wrapped HTML uploads](bundler-wrapped-uploads.md) — attached .html exports can be self-extracting shells; real page is JSON inside the __bundler/template script tag.
+- [Content glob validation](content-glob-validation.md) — a green Vite build can hide empty markdown globs; compare the loaded registry and raw payloads to source files.

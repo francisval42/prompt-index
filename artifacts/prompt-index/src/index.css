@@ -18,6 +18,7 @@
   --color-muted: #8a8a8a;
   --color-border: #1f1f1f;
   --color-accent: #ff5c00;
+  --color-cursor: #111111;
 
   --font-mono: "JetBrains Mono", monospace;
   --font-sans: "JetBrains Mono", monospace;
@@ -30,5 +31,89 @@
     color: var(--color-foreground);
     font-family: var(--font-mono);
     -webkit-font-smoothing: antialiased;
+  }
+}
+
+@layer components {
+  .manifest-action {
+    cursor: pointer;
+    touch-action: manipulation;
+    padding: 6px 0;
+    line-height: 20px;
+  }
+  .manifest-prose a {
+    color: var(--color-foreground);
+    text-decoration: underline;
+  }
+  .manifest-prose a:focus-visible {
+    outline: 2px solid var(--color-accent);
+  }
+  .manifest-prose ul { list-style: disc; }
+  .manifest-prose ol { list-style: decimal; }
+  .manifest-prose hr {
+    border-color: var(--color-border);
+    margin: 24px 0;
+  }
+  .manifest-prose blockquote {
+    border-left: 1px solid var(--color-border);
+    padding-left: 16px;
+    color: var(--color-muted);
+  }
+  .manifest-prose {
+    font-size: 15px;
+    line-height: 1.75;
+    color: var(--color-foreground);
+    overflow-wrap: anywhere;
+  }
+  .manifest-prose h1 {
+    font-size: 15px;
+    font-weight: 700;
+    margin-top: 1.5em;
+    margin-bottom: 0.5em;
+  }
+  .manifest-prose h2, .manifest-prose h3 {
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--color-muted);
+    margin-top: 2em;
+    margin-bottom: 1em;
+  }
+  .manifest-prose p, .manifest-prose ul, .manifest-prose ol {
+    margin-top: 0;
+    margin-bottom: 1em;
+  }
+  .manifest-prose ul, .manifest-prose ol {
+    padding-left: 1.5em;
+  }
+  .manifest-prose code {
+    background-color: #1f1f1f;
+    padding: 1px 5px;
+    font-size: 13px;
+  }
+  .manifest-prose pre code {
+    background-color: transparent;
+    padding: 0;
+  }
+  .manifest-prose table {
+    color: var(--color-muted);
+    white-space: pre;
+    display: block;
+    overflow-x: auto;
+  }
+  .manifest-prose img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 1.5em 0;
+  }
+  @media (width < 760px) {
+    .manifest-action {
+      min-height: 44px;
+      min-width: 44px;
+      padding: 12px 0;
+    }
+    .manifest-prose { font-size: 16px; }
   }
 }

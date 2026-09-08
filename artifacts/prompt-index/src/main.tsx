@@ -2,7 +2,7 @@ import { lazy, Suspense, type ComponentType } from 'react';
 import { createRoot } from 'react-dom/client';
 import { Route, Router, Switch, useLocation } from 'wouter';
 
-import App from './App';
+import { IndexRoute } from './components/index-route';
 import { ErrorBoundary } from '@/components/error-boundary';
 
 import './index.css';
@@ -65,8 +65,8 @@ function RoutedApp() {
             <AdminPage />
           </Suspense>
         </Route>
-        {/* Everything else renders the index, matching previous behavior. */}
-        <Route component={App} />
+        {/* Retired tabs and unknown paths redirect to the single manifest. */}
+        <Route component={IndexRoute} />
       </Switch>
     </ErrorBoundary>
   );

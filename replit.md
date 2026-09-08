@@ -18,7 +18,7 @@ A single-page personal index of AI prompts for francisvalente.com: find a prompt
 - API: Express on the shared api-server artifact; contract-first (endpoints declared in `lib/api-spec/openapi.yaml`, orval generates the zod schemas and fetch client)
 - Payments: Stripe via the Replit connector (test keys in dev; live keys arrive via the Publish pane when publishing). `stripe-replit-sync` migrates a Postgres `stripe` schema and syncs payment data through a managed webhook at `/api/stripe/webhook`
 - Newsletter: Resend called via plain fetch (no SDK) from the api-server; subscriber and issue tables live in the shared Postgres through `lib/db` (drizzle-kit push)
-- Fonts: JetBrains Mono self-hosted via @fontsource/jetbrains-mono (400/500/700); Gladiator (single cut, self-hosted TTF at `src/assets/fonts/`) for the INDEX masthead titles only, set at font-weight normal, never below 28px, never UI or body
+- Fonts: JetBrains Mono self-hosted via @fontsource/jetbrains-mono (400/500/700); Gladiator (single cut, self-hosted TTF at `src/assets/fonts/`) is used only for the 36px Melbourne clock on the manifest. Existing `/pay` and `/admin` title styling remains unchanged.
 - Markdown rendering: `marked` (the only parser dependency)
 
 ## Where things live
@@ -33,7 +33,8 @@ A single-page personal index of AI prompts for francisvalente.com: find a prompt
 - `artifacts/api-server/src/lib/stripeClient.ts` — Stripe credentials from the Replit connector (uncached so token rotation works)
 - `artifacts/api-server/src/index.ts` — boot: stripe schema migrations → managed webhook registration → non-blocking backfill
 - `SCHEMA.md` (repo root) — documents the content model; never rendered, linked or referenced on the site
-- `attached_assets/Pasted--Replit-Agent-Build-Brief-Prompt-Index-francisvalente-c_1787282585385.txt` — the binding build spec; consult it before any design or scope change
+- `attached_assets/Francis_Valente's_Weekly_AI_Digest_1788868611216.zip` contains `design_handoff_manifest/BUILD-BRIEF.md`, the binding Manifest spec and its HTML reference. It supersedes the earlier tabbed-index brief. The reference is not production content.
+- `attached_assets/Pasted--Replit-Agent-Build-Brief-Prompt-Index-francisvalente-c_1787282585385.txt` applies only where the Manifest brief is silent.
 
 ## Architecture decisions
 
@@ -44,7 +45,14 @@ A single-page personal index of AI prompts for francisvalente.com: find a prompt
 
 ## Product
 
-Five tabs with stable URLs (Prompts `/`, Brand skill `/brand`, Launch ready `/launch`, Connect `/connect`, Explainers `/explainers`): INDEX header, filter input on Prompts (`/` focuses, Esc clears, case-insensitive substring across id/title/category/type/platforms), categories in fixed order (Protocols, Discovery, Generation, Repairs, Review, Builds; empty ones vanish entirely), dense hairline rows that expand inline to rendered markdown, COPY buttons copying raw bodies exactly, DOWNLOAD on Connect saving each doc under its frontmatter file name. Explainers rows show titles only and expand to a long-form readable topic: images referenced by relative path in content/explainers markdown are rewritten to Vite asset URLs (full column width, no border), and each fenced code block renders as a React component with the site's stateful COPY button (renders exactly what it copies). Mobile: 16px base text, 44px tap targets, horizontally scrollable nav.
+The site is a single flat manifest. Everything the site holds (Prompts, Packs, Notes, Digest issues) lists on one page as rows in one ledger: find a thing, copy it, leave.
+- Prompts: `content/prompts/*.md`. Action = COPY (raw body).
+- Packs: `content/launch-ready/*.md` and `content/connect/*.md`. Action = COPY. Connect items additionally show a DOWNLOAD button for their content.
+- Notes: `content/explainers/*.md` and the brand skill. Action = COPY.
+- Digest: `content/digest/*.md`. Action = OPEN (links to issue URL).
+Rows filter instantly across ref, kind, title, section, and tags via the header input. Expand to read, or navigate with global j/k/Enter/c keys. Mobile: 16px base text, 44px tap targets. Legacy `/brand`, `/launch`, `/connect`, and `/explainers` redirect silently to `/`. Unknown paths retain the one-time redirect notice.
+
+Digest is content-driven, not automatically populated by newsletter sends. The handoff's sample `weekly-digest.html` destination was not included, so no sample issue is shipped. Add real issue files with working URLs; empty and fully filtered sections never render.
 
 `/pay` (unlisted, not in the nav): custom AUD amount (min A$1, max A$10,000) plus optional reference (≤200 chars) → embedded dark-themed Stripe Payment Element (billing country defaults to AU) → PAID / error-with-retry states. Same design language as the index; deliberately no products, subscriptions, auth, saved cards, or refunds.
 
@@ -52,8 +60,8 @@ Five tabs with stable URLs (Prompts `/`, Brand skill `/brand`, Launch ready `/la
 
 ## User preferences
 
-- The attached build brief is the spec and wins over defaults: clinical greyscale look, accent #ff5c00 only on active-tab underline / hover / focus / COPIED / PAID and payment errors, no icons, shadows, cards, gradients, toasts, footer, or descriptive copy anywhere. One user-granted exception to the old no-images rule: explainer topic bodies (content/explainers) may embed diagrams, rendered inline at column width with no border
-- No new dependencies beyond React, Vite, @fontsource/jetbrains-mono, one markdown parser, and the Stripe libraries required by `/pay`
+- The Manifest spec wins over defaults: flat charcoal/greyscale, accent #ff5c00 only on cursor bars, the focused filter underline, focus-visible outlines and COPIED. No icons, shadows, cards, gradients, toasts, motion, masthead or descriptive copy. Only the key legend follows the sections. Payment/admin states retain their existing styles.
+- No new dependencies beyond React, Vite, @fontsource/jetbrains-mono, marked (one markdown parser), and the Stripe libraries required by `/pay`
 
 ## Gotchas
 
@@ -80,7 +88,7 @@ Five tabs with stable URLs (Prompts `/`, Brand skill `/brand`, Launch ready `/la
 - Approved brand direction: the FRANCIS VALENTE specimen at `attached_assets/francis_valente_brand_spec_1787401127952.html`; kit boards are canvas iframes backed by `artifacts/mockup-sandbox/src/components/mockups/brand-kit/`
 - Reusable assets: `attached_assets/brand/` (tokens.css, tokens.json, fonts/, marks/) plus the bundle `attached_assets/francis-valente-brand-kit.zip`
 - Rules: Gladiator is display-only (wordmark and large display moments, never below ~28px, never UI labels or body); orange #ff5c00 marks active/focused/copied states only, never decoration; a light context (#ffffff background, same ink/muted/accent) is approved in the spec
-- The site uses Gladiator for the page titles only (explicit user decision, August 2026); every other element stays JetBrains Mono per the brief
+- The Manifest brief supersedes the old INDEX title: there is no masthead. Gladiator is reserved for the Melbourne clock; all other manifest text is JetBrains Mono.
 
 ## Pointers
 
