@@ -391,6 +391,12 @@ export default function App() {
             <span>c copy</span>
             <span>/ filter</span>
             <span>esc clear</span>
+            <a
+              href={`${import.meta.env.BASE_URL.replace(/\/+$/, '')}/pay?coffee`}
+              className="text-[var(--color-muted)] hover:text-[var(--color-foreground)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--color-accent)] outline-none no-underline"
+            >
+              coffee
+            </a>
           </div>
         </div>
       </main>

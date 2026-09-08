@@ -12,6 +12,11 @@ import { createPayIntent, getPayConfig } from '@workspace/api-client-react';
 const MIN_CENTS = 100;
 const MAX_CENTS = 1_000_000;
 
+// Coffee mode (/pay?coffee): a count stepper at a fixed price instead of free-text amount and reference.
+const COFFEE_CENTS = 500;
+const COFFEE_MIN = 1;
+const COFFEE_MAX = 50;
+
 function parseAmountToCents(raw: string): number | null {
   const cleaned = raw.trim().replace(/^a?\$/i, '').replace(/,/g, '');
   if (!/^\d+(\.\d{1,2})?$/.test(cleaned)) return null;
@@ -169,6 +174,8 @@ export default function PayPage() {
   const [configNonce, setConfigNonce] = useState(0);
 
   const [phase, setPhase] = useState<'input' | 'element' | 'done'>('input');
+  const [coffeeMode] = useState(() => new URLSearchParams(window.location.search).has('coffee'));
+  const [coffees, setCoffees] = useState(1);
   const [amount, setAmount] = useState('');
   const [reference, setReference] = useState('');
   const [inputError, setInputError] = useState<{ field: 'amount' | 'reference' | 'form'; message: string } | null>(null);
@@ -196,12 +203,12 @@ export default function PayPage() {
 
   const handleContinue = async () => {
     if (creating) return;
-    const cents = parseAmountToCents(amount);
+    const cents = coffeeMode ? coffees * COFFEE_CENTS : parseAmountToCents(amount);
     if (cents == null || cents < MIN_CENTS || cents > MAX_CENTS) {
       setInputError({ field: 'amount', message: 'Enter an amount between A$1.00 and A$10,000.00.' });
       return;
     }
-    const ref = reference.trim();
+    const ref = coffeeMode ? `Coffee x ${coffees}` : reference.trim();
     if (ref.length > 200) {
       setInputError({ field: 'reference', message: 'Reference must be 200 characters or fewer.' });
       return;
@@ -231,6 +238,7 @@ export default function PayPage() {
   };
 
   const handleReset = () => {
+    setCoffees(1);
     setAmount('');
     setReference('');
     setSubmittedReference('');
@@ -247,13 +255,84 @@ export default function PayPage() {
 
       <nav className="px-4 sm:px-8 border-b border-border flex items-end h-12">
         <div className="h-full flex items-center border-b-2 border-accent text-foreground font-medium px-2 -mb-[1px]">
-          Pay
+          {coffeeMode ? 'Coffee' : 'Pay'}
         </div>
       </nav>
 
       <main className="flex-1 max-w-5xl w-full mx-auto p-4 sm:p-8">
         <div className="max-w-md flex flex-col gap-10 pb-16">
-          {phase === 'input' && (
+          {phase === 'input' && coffeeMode && (
+            <section className="flex flex-col gap-6">
+              <p className="text-muted">
+                Buy Francis a coffee. Processed by Stripe in AUD.
+              </p>
+
+              <div className="flex flex-col gap-2">
+                <div className={labelClass}>Coffees</div>
+                <div className="flex items-center gap-6">
+                  <div className="flex items-stretch border border-border">
+                    <button
+                      type="button"
+                      aria-label="One less coffee"
+                      onClick={() => setCoffees((n) => Math.max(COFFEE_MIN, n - 1))}
+                      disabled={coffees <= COFFEE_MIN}
+                      className="px-4 py-3 font-bold text-muted hover:text-foreground disabled:text-border touch-manipulation focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent outline-none transition-none"
+                    >
+                      -
+                    </button>
+                    <div aria-live="polite" className="min-w-[3ch] flex items-center justify-center text-foreground font-bold tabular-nums">
+                      {coffees}
+                    </div>
+                    <button
+                      type="button"
+                      aria-label="One more coffee"
+                      onClick={() => setCoffees((n) => Math.min(COFFEE_MAX, n + 1))}
+                      disabled={coffees >= COFFEE_MAX}
+                      className="px-4 py-3 font-bold text-muted hover:text-foreground disabled:text-border touch-manipulation focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent outline-none transition-none"
+                    >
+                      +
+                    </button>
+                  </div>
+                  <div className="text-xl font-bold tabular-nums">{formatAud(coffees * COFFEE_CENTS)}</div>
+                </div>
+                <div className="text-xs text-muted">{formatAud(COFFEE_CENTS)} a coffee.</div>
+                {inputError?.field === 'amount' && (
+                  <div className="text-accent">{inputError.message}</div>
+                )}
+              </div>
+
+              {inputError?.field === 'form' && <div className="text-accent">{inputError.message}</div>}
+              {configError && (
+                <div className="text-accent">
+                  {configError}{' '}
+                  <button
+                    type="button"
+                    onClick={() => setConfigNonce((n) => n + 1)}
+                    className="underline font-bold p-2 -m-2 touch-manipulation focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent outline-none"
+                  >
+                    RETRY
+                  </button>
+                </div>
+              )}
+
+              <div>
+                <button
+                  type="button"
+                  onClick={() => void handleContinue()}
+                  disabled={creating || !!configError || !stripePromise}
+                  className={buttonClass}
+                >
+                  {creating
+                    ? 'STARTING...'
+                    : !stripePromise && !configError
+                      ? 'LOADING...'
+                      : 'CONTINUE'}
+                </button>
+              </div>
+            </section>
+          )}
+
+          {phase === 'input' && !coffeeMode && (
             <section className="flex flex-col gap-6">
               <p className="text-muted">
                 Make a payment to Francis Valente. Processed by Stripe in AUD.
@@ -398,7 +477,7 @@ export default function PayPage() {
               </p>
               <div>
                 <button type="button" onClick={handleReset} className={buttonClass}>
-                  NEW PAYMENT
+                  {coffeeMode ? 'ANOTHER COFFEE' : 'NEW PAYMENT'}
                 </button>
               </div>
             </section>
