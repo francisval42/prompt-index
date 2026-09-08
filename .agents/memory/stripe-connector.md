@@ -23,3 +23,11 @@ The Replit Stripe connector's connection-settings API returns keys `secret` and 
 
 - `runMigrations({ databaseUrl })` — no `schema` option; the SQL hardcodes the `stripe` schema.
 - `findOrCreateManagedWebhook(url)` returns `Stripe.WebhookEndpoint` directly (use `.url`), not a wrapper object.
+
+# API access is not proof of live checkout setup
+
+Treat a successful Stripe API-key check, an added generic Stripe connection, and the managed payments production connection as separate checks. A working development sandbox is not evidence that production credentials are attached.
+
+**Why:** Stripe authentication succeeded through both a manually supplied live key and a sandbox connection while the published payment configuration still lacked its managed credentials. Replit's documented go-live flow uses the Replit Integrated Payments Stripe Marketplace app from the Publish pane, not merely adding a secret.
+
+**How to apply:** Verify the published payment configuration as well as direct API authentication. Do not pair a live secret with a sandbox publishable key or silently switch the preview to real-money payments. Consult current Replit docs for the go-live steps.
