@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useMemo } from 'react';
-import { allItems, ManifestItem } from './lib/model';
+import { allItems, ManifestItem, SECTIONS, PROMPT_CATEGORIES, Section } from './lib/model';
 import { resolveExplainerAssetUrls, splitMarkdownSegments, copyText, downloadText } from './lib/content-utils';
 
 function formatManifestDate(dStr: string) {
@@ -13,7 +13,17 @@ function formatManifestDate(dStr: string) {
 }
 
 export default function App() {
+  const readSection = (): Section | '' => {
+    const s = new URLSearchParams(window.location.search).get('s') ?? '';
+    return (SECTIONS as readonly string[]).includes(s) ? (s as Section) : '';
+  };
+  const readCategory = (): string => {
+    const c = new URLSearchParams(window.location.search).get('c') ?? '';
+    return (PROMPT_CATEGORIES as readonly string[]).includes(c) ? c : '';
+  };
   const [filter, setFilter] = useState(() => new URLSearchParams(window.location.search).get('q') ?? '');
+  const [section, setSection] = useState<Section | ''>(readSection);
+  const [category, setCategory] = useState<string>(readCategory);
   const [focused, setFocused] = useState(false);
   const [cursor, setCursor] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -22,16 +32,24 @@ export default function App() {
   useEffect(() => {
     const timeout = window.setTimeout(() => {
       const url = new URL(window.location.href);
-      if ((url.searchParams.get('q') ?? '') === filter) return;
-      if (filter) url.searchParams.set('q', filter);
-      else url.searchParams.delete('q');
+      const same = (url.searchParams.get('q') ?? '') === filter
+        && (url.searchParams.get('s') ?? '') === section
+        && (url.searchParams.get('c') ?? '') === category;
+      if (same) return;
+      if (filter) url.searchParams.set('q', filter); else url.searchParams.delete('q');
+      if (section) url.searchParams.set('s', section); else url.searchParams.delete('s');
+      if (category) url.searchParams.set('c', category); else url.searchParams.delete('c');
       window.history.replaceState(window.history.state, '', `${url.pathname}${url.search}${url.hash}`);
     }, 150);
     return () => window.clearTimeout(timeout);
-  }, [filter]);
+  }, [filter, section, category]);
 
   useEffect(() => {
-    const restoreFilter = () => setFilter(new URLSearchParams(window.location.search).get('q') ?? '');
+    const restoreFilter = () => {
+      setFilter(new URLSearchParams(window.location.search).get('q') ?? '');
+      setSection(readSection());
+      setCategory(readCategory());
+    };
     window.addEventListener('popstate', restoreFilter);
     return () => window.removeEventListener('popstate', restoreFilter);
   }, []);
@@ -47,19 +65,35 @@ export default function App() {
 
   const term = filter.toLowerCase();
   const visibleItems = useMemo(() => {
-    if (!term) return allItems;
-    return allItems.filter(item => {
+    const matched = allItems.filter(item => {
+      if (section && item.section !== section) return false;
+      if (section === 'Prompts' && category && item.category !== category) return false;
+      if (!term) return true;
       return item.ref.toLowerCase().includes(term) ||
              item.kind.toLowerCase().includes(term) ||
+             (item.category ?? '').toLowerCase().includes(term) ||
              item.title.toLowerCase().includes(term) ||
              item.section.toLowerCase().includes(term) ||
              item.tags.toLowerCase().includes(term);
     });
-  }, [term]);
+    // Newest first by added date; same-day entries keep their ref order.
+    return [...matched].sort((a, b) => (b.added || '').localeCompare(a.added || '') || a.ref.localeCompare(b.ref));
+  }, [term, section, category]);
+
+  const presentCategories = useMemo(
+    () => PROMPT_CATEGORIES.filter(c => allItems.some(item => item.section === 'Prompts' && item.category === c)),
+    [],
+  );
+
+  const chooseSection = (next: Section | '') => {
+    setSection(next);
+    if (next !== 'Prompts') setCategory('');
+    setExpandedId(null);
+  };
 
   useEffect(() => {
     setCursor(0);
-  }, [term]);
+  }, [term, section, category]);
 
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -86,6 +120,8 @@ export default function App() {
 
       if (e.key === 'Escape') {
         setFilter('');
+        setSection('');
+        setCategory('');
         setExpandedId(null);
         inputRef.current?.blur();
         return;
@@ -156,8 +192,6 @@ export default function App() {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [visibleItems, cursor, copiedId]);
 
-  const sections = ['Prompts', 'Packs', 'Notes', 'Digest'] as const;
-  
   return (
     <div className="manifest min-h-[100dvh] bg-[var(--color-background)] text-[var(--color-foreground)] font-mono text-[14px] max-[760px]:text-base leading-relaxed flex flex-col">
       {/* Status Line */}
@@ -193,26 +227,51 @@ export default function App() {
 
       {/* Manifest */}
       <main className="py-2 px-[clamp(16px,4vw,40px)] pb-[120px] max-w-[1180px] box-border flex flex-col gap-9">
-        {term && visibleItems.length === 0 && (
-          <div className="pt-6 text-[var(--color-muted)]">0 results</div>
+        {/* Section and category switches */}
+        <nav aria-label="Sections" className="flex flex-col gap-2 pt-7">
+          <div className="flex flex-wrap gap-x-6 gap-y-2 text-[11px] font-medium tracking-[0.14em] uppercase">
+            {(['', ...SECTIONS] as const).map(sec => {
+              const active = section === sec;
+              return (
+                <button
+                  key={sec || 'recent'}
+                  type="button"
+                  aria-pressed={active}
+                  onClick={() => chooseSection(sec)}
+                  className={`manifest-action bg-transparent border-0 p-0 font-mono cursor-pointer outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--color-accent)] ${active ? 'text-[var(--color-accent)]' : 'text-[var(--color-muted)] hover:text-[var(--color-foreground)]'}`}
+                >
+                  {sec || 'Recent'}
+                </button>
+              );
+            })}
+          </div>
+          {section === 'Prompts' && presentCategories.length > 0 && (
+            <div className="flex flex-wrap gap-x-6 gap-y-2 text-[11px] tracking-[0.14em] uppercase">
+              {(['', ...presentCategories] as const).map(cat => {
+                const active = category === cat;
+                return (
+                  <button
+                    key={cat || 'all'}
+                    type="button"
+                    aria-pressed={active}
+                    onClick={() => { setCategory(cat); setExpandedId(null); }}
+                    className={`manifest-action bg-transparent border-0 p-0 font-mono cursor-pointer outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--color-accent)] ${active ? 'text-[var(--color-accent)]' : 'text-[var(--color-muted)] hover:text-[var(--color-foreground)]'}`}
+                  >
+                    {cat || 'All'}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </nav>
+
+        {visibleItems.length === 0 && (
+          <div className="text-[var(--color-muted)]">0 results</div>
         )}
 
-        {sections.map(sec => {
-          const items = visibleItems.filter(i => i.section === sec);
-          if (items.length === 0) return null;
-
-          return (
-            <section key={sec} className="flex flex-col">
-              <div className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline pt-7 pb-2 border-b border-[var(--color-border)]">
-                <h2 className="m-0 text-[11px] font-medium tracking-[0.14em] uppercase text-[var(--color-muted)]">
-                  {sec}
-                </h2>
-                <span className="text-[11px] tracking-[0.1em] text-[var(--color-muted)]">
-                  {items.length.toString().padStart(2, '0')}
-                </span>
-              </div>
-
-              {items.map(item => {
+        {visibleItems.length > 0 && (
+            <section className="flex flex-col border-t border-[var(--color-border)]">
+              {visibleItems.map(item => {
                 const isCursor = visibleItems[cursor]?.id === item.id;
                 const isExpanded = expandedId === item.id;
                 const isCopied = copiedId === item.id;
@@ -252,9 +311,10 @@ export default function App() {
                       <div className="text-[var(--color-muted)] text-[11px] uppercase tracking-[0.1em] [overflow-wrap:anywhere] max-[760px]:hidden">{item.kind}</div>
                       <div className="font-medium text-[var(--color-foreground)] min-w-0 leading-[1.5] min-[760px]:max-[1000px]:line-clamp-2 [overflow-wrap:anywhere]">
                         {item.title}
+                        <span className="hidden max-[760px]:block mt-1 font-normal text-[var(--color-muted)] text-[11px] uppercase tracking-[0.06em]">{formatManifestDate(item.added)}</span>
                       </div>
                       <div className="text-[var(--color-muted)] text-[12px] flex flex-wrap gap-x-3 gap-y-1 [overflow-wrap:anywhere] max-[1000px]:hidden">{item.tags.split(', ').map(tag => <span key={tag}>{tag}</span>)}</div>
-                      <div className="text-[var(--color-muted)] text-[11px] uppercase tracking-[0.06em] text-right max-[760px]:hidden">{formatManifestDate(item.updated)}</div>
+                      <div className="text-[var(--color-muted)] text-[11px] uppercase tracking-[0.06em] text-right whitespace-nowrap max-[760px]:hidden">{formatManifestDate(item.added)}</div>
                       
                       <div className="flex justify-end text-[12px] tracking-[0.06em]">
                         {item.action === 'OPEN' ? (
@@ -283,6 +343,9 @@ export default function App() {
                     {isExpanded && item.action !== 'OPEN' && (
                       <div id={`body-${item.id}`} className="border-t border-[var(--color-border)] pt-[32px] pb-[36px] pr-[14px] pl-[166px] max-[760px]:pl-0">
                         <div className="max-w-[72ch] min-w-0">
+                          {item.updated && item.updated !== item.added && (
+                            <div className="mb-6 text-[11px] uppercase tracking-[0.06em] text-[var(--color-muted)]">Updated {formatManifestDate(item.updated)}</div>
+                          )}
                           <div className="manifest-prose">
                             {splitMarkdownSegments(item.body).map((seg, idx) => {
                               if (seg.kind === 'html') {
@@ -319,8 +382,7 @@ export default function App() {
                 );
               })}
             </section>
-          );
-        })}
+        )}
 
         <div className="pt-2">
           <div className="flex flex-wrap gap-6 text-[11px] tracking-[0.1em] uppercase text-[var(--color-muted)]">

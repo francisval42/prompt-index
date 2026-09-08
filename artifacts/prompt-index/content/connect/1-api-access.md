@@ -2,6 +2,7 @@
 order: 1
 file: 1-API-ACCESS.md
 title: The auth checklist
+added: 2026-08-22
 updated: 2026-08-23
 ---
 

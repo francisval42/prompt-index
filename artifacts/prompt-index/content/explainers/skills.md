@@ -2,6 +2,7 @@
 order: 0
 file: skills.md
 title: Claude skills
+added: 2026-08-28
 updated: 2026-08-28
 ---
 

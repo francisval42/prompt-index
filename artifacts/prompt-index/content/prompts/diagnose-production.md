@@ -4,6 +4,7 @@ title: Diagnose a broken production app before touching code
 category: Repairs
 type: Prompt
 platforms: [Claude, Replit Agent]
+added: 2026-08-23
 updated: 2026-08-23
 ---
 

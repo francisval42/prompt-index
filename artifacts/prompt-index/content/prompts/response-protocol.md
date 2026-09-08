@@ -4,6 +4,7 @@ title: Force direct, structured, honest answers for a whole chat
 category: Protocols
 type: Protocol
 platforms: [Claude, ChatGPT]
+added: 2026-08-21
 updated: 2026-08-21
 ---
 

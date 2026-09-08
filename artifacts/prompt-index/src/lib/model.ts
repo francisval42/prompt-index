@@ -5,8 +5,10 @@ export type ManifestItem = {
   section: 'Prompts' | 'Packs' | 'Notes' | 'Digest';
   ref: string;
   kind: string;
+  category?: string;
   title: string;
   tags: string;
+  added: string;
   updated: string;
   action: 'COPY' | 'OPEN';
   body: string;
@@ -26,8 +28,10 @@ const prompts: ManifestItem[] = Object.entries(promptModules)
       section: 'Prompts' as const,
       ref: parsed.id || '',
       kind: parsed.type || 'Prompt',
+      category: parsed.category || '',
       title: parsed.title || '',
       tags: Array.isArray(parsed.platforms) ? parsed.platforms.join(', ') : (parsed.platforms || ''),
+      added: parsed.added || parsed.updated || '',
       updated: parsed.updated || '',
       action: 'COPY' as const,
       body: parsed.body,
@@ -49,6 +53,7 @@ const launchReady: ManifestItem[] = Object.entries(launchReadyModules)
       kind: 'Launch ready',
       title: parsed.title || '',
       tags: parsed.file || filename,
+      added: parsed.added || parsed.updated || '',
       updated: parsed.updated || '',
       action: 'COPY' as const,
       body: parsed.body,
@@ -69,6 +74,7 @@ const connect: ManifestItem[] = Object.entries(connectModules)
       kind: 'Connect',
       title: parsed.title || '',
       tags: parsed.file || filename,
+      added: parsed.added || parsed.updated || '',
       updated: parsed.updated || '',
       action: 'COPY' as const,
       body: parsed.body,
@@ -93,6 +99,7 @@ const explainers: ManifestItem[] = Object.entries(explainerModules)
       kind: parsed.kind || 'Explainer',
       title: parsed.title || '',
       tags: parsed.file || filename,
+      added: parsed.added || parsed.updated || '',
       updated: parsed.updated || '',
       action: 'COPY' as const,
       body: parsed.body,
@@ -122,6 +129,7 @@ const brandSkillItem: ManifestItem = {
   title: 'Make a brand skill',
   tags: brandSkill?.name || 'francis-valente-brand',
   // Supplied Manifest reference metadata; the skill file itself has no date.
+  added: '2026-08-22',
   updated: '2026-08-26',
   action: 'COPY',
   body: brandSkillBody,
@@ -148,6 +156,7 @@ const digest: ManifestItem[] = Object.entries(digestModules)
       kind: 'Issue',
       title: parsed.title || '',
       tags: 'Email',
+      added: parsed.added || parsed.updated || '',
       updated: parsed.updated || '',
       action: 'OPEN' as const,
       body: '',
@@ -155,6 +164,10 @@ const digest: ManifestItem[] = Object.entries(digestModules)
     };
   })
   .filter(Boolean) as ManifestItem[];
+
+export const SECTIONS = ['Prompts', 'Packs', 'Notes', 'Digest'] as const;
+export type Section = (typeof SECTIONS)[number];
+export const PROMPT_CATEGORIES = ['Protocols', 'Discovery', 'Generation', 'Repairs', 'Review', 'Builds'] as const;
 
 export const allItems: ManifestItem[] = [
   ...prompts.sort((a, b) => a.ref.localeCompare(b.ref)),
