@@ -15,12 +15,12 @@ description: "Capture something from the current chat as publishable content wit
 
 # /thisiscontent
 
-Francis says this mid-conversation when the thing just built, explained or discovered is worth sharing later on francisvalente.com. The job is to capture it properly and hand the conversation straight back. Nothing about the current task changes.
+The user says this mid-conversation when the thing just built, explained or discovered is worth sharing later on francisvalente.com. The job is to capture it properly and hand the conversation straight back. Nothing about the current task changes.
 
 ## Two modes
 
 - `/thisiscontent` (optionally with a hint, e.g. `/thisiscontent the bundle sync trick`) captures one entry from the current chat.
-- `/thisiscontent review` opens the log for a publishing pass with Francis.
+- `/thisiscontent review` opens the log for a publishing pass with the user.
 
 ## Destination
 
@@ -33,7 +33,7 @@ If the Notion connector is not available in the chat, write the entry as a markd
 
 ## Capture mode
 
-1. Work out what the content is. Default to the most recent complete, reusable thing in the chat: a prompt, a protocol, a process, a technique, a design decision, an idea. A hint after the command wins. If two candidates are equally plausible, pick the more reusable one and name the other in the closing line so Francis can redirect with one word.
+1. Work out what the content is. Default to the most recent complete, reusable thing in the chat: a prompt, a protocol, a process, a technique, a design decision, an idea. A hint after the command wins. If two candidates are equally plausible, pick the more reusable one and name the other in the closing line so the user can redirect with one word.
 2. Create one page in the Content Log with these properties:
    - Name: outcome-phrased, reserved, part of the furniture. What it lets you do, never a brand name, never ad language, no exclamation marks. Same grammar as the site titles ("Run a shadow work session that ends in one change to try").
    - Summary: two or three plain sentences. What it is, when you reach for it, what it produces.
@@ -60,8 +60,8 @@ If the Notion connector is not available in the chat, write the entry as a markd
 
 1. Query the Content Log for everything with Status Captured or Reviewed, newest first.
 2. Present them as a numbered list: Ref, Name, Kind, Category, Captured date, one line of the Summary. Nothing else.
-3. Work through them one at a time with Francis, one question per turn: publish, park, or needs more. For each one to publish, draft the site entry from the page body using the site content model (SCHEMA.md in the prompt-index repo: three-digit id set once, outcome-phrased title, one category, type, platforms, added and updated dates, body verbatim for prompts). Hand the entry to the website work as a branch with a separate commit, in line with how he reviews code changes.
-4. Update the Notion page: Status to Publishing when the branch is pushed, Published with the Site ref filled in once it is live, Parked if he passes.
+3. Work through them one at a time with the user, one question per turn: publish, park, or needs more. For each one to publish, draft the site entry from the page body using the site content model (SCHEMA.md in the prompt-index repo: three-digit id set once, outcome-phrased title, one category, type, platforms, added and updated dates, body verbatim for prompts). Hand the entry to the website work as a branch with a separate commit, in line with how they review code changes.
+4. Update the Notion page: Status to Publishing when the branch is pushed, Published with the Site ref filled in once it is live, Parked if they pass.
 
 ## Style
 
